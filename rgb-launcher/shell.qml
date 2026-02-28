@@ -17,6 +17,8 @@ ShellRoot {
 
         implicitWidth: screen.width
         implicitHeight: screen.height
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
         property bool launcherVisible: true
 
