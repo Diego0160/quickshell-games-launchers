@@ -21,6 +21,7 @@ Launcher de jeux avec support multi-plateformes et interface élégante.
 - 📚 Vue bibliothèque avec chemins d'installation
 
 **Contrôles:**
+- Rechercher un jeu...
 - `←` `→` : Navigation
 - `Enter` : Lancer le jeu
 - `Double-clic` : Lancer le jeu
@@ -29,6 +30,8 @@ Launcher de jeux avec support multi-plateformes et interface élégante.
 
 ### 🌈 RGB Launcher
 Contrôleur OpenRGB avec 8 séquences d'animation + couleurs fixes.
+
+![Rgb Launcher Preview](rgb-launcher/image_openrgb.png)
 
 **Séquences:**
 1. 🌊 **Ocean Wave** - Vague océanique fluide
