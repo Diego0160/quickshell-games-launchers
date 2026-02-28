@@ -73,6 +73,8 @@ ShellRoot {
 
             implicitWidth: screen.width
             implicitHeight: screen.height
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
             // Root item to capture keyboard events
             Item {
