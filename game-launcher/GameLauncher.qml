@@ -13,6 +13,7 @@ Rectangle {
     property var filteredGames: []
     property var colors: ({})
     property int selectedIndex: 0
+    property string searchText: ""
 
     // Config values
     property string orientation: config?.display?.orientation ?? "horizontal"
@@ -24,7 +25,7 @@ Rectangle {
 
     // Dimensions adaptées selon l'orientation
     width: (itemWidth * gridColumns) + (spacing * (gridColumns + 1))
-    height: (itemHeight * gridRows) + (spacing * (gridRows + 1)) + 60
+    height: (itemHeight * gridRows) + (spacing * (gridRows + 1)) + 60 + 44 + spacing  // +44 searchbar
 
     // IMPORTANT: Keep focus for keyboard input
     focus: true
@@ -44,7 +45,7 @@ Rectangle {
         layer.enabled: config?.appearance?.blur_background ?? true
         layer.effect: MultiEffect {
             blurEnabled: true
-            blur: 0.8
+            blur: 0.9
             blurMax: 32
         }
     }
@@ -67,25 +68,44 @@ Rectangle {
     // Keyboard navigation
     Keys.onPressed: (event) => {
         if (event.key === Qt.Key_Escape) {
-            launcher.closeRequested()
+            if (searchText !== "") {
+                searchText = ""
+                searchField.clear()
+            } else {
+                launcher.closeRequested()
+            }
             event.accepted = true
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-            launchSelectedGame()
+            if (!searchField.activeFocus) launchSelectedGame()
             event.accepted = true
-        } else if (event.key === Qt.Key_Left) {
+        } else if (event.key === Qt.Key_Left && !searchField.activeFocus) {
             navigateLeft()
             event.accepted = true
-        } else if (event.key === Qt.Key_Right) {
+        } else if (event.key === Qt.Key_Right && !searchField.activeFocus) {
             navigateRight()
             event.accepted = true
-        } else if (event.key === Qt.Key_Up) {
+        } else if (event.key === Qt.Key_Up && !searchField.activeFocus) {
             navigateUp()
             event.accepted = true
-        } else if (event.key === Qt.Key_Down) {
+        } else if (event.key === Qt.Key_Down && !searchField.activeFocus) {
             navigateDown()
+            event.accepted = true
+        } else if (event.key === Qt.Key_Backspace && !searchField.activeFocus) {
+            if (searchText.length > 0) {
+                searchText = searchText.slice(0, -1)
+                searchField.text = searchText
+            }
+            event.accepted = true
+        } else if (event.text && event.text.length > 0 && !event.modifiers && !searchField.activeFocus) {
+            // Typing directly starts searching
+            searchText += event.text
+            searchField.text = searchText
+            searchField.forceActiveFocus()
             event.accepted = true
         }
     }
+
+    onSearchTextChanged: filterGames()
 
     signal closeRequested()
 
@@ -120,7 +140,15 @@ Rectangle {
     }
 
     function filterGames() {
-        filteredGames = gamesData.slice(); // Clone array
+        if (searchText.trim() === "") {
+            filteredGames = gamesData.slice()
+        } else {
+            const query = searchText.toLowerCase()
+            filteredGames = gamesData.filter(g =>
+                (g.name || "").toLowerCase().includes(query) ||
+                (g.category || "").toLowerCase().includes(query)
+            )
+        }
 
         // Reset selection if out of bounds
         if (selectedIndex >= filteredGames.length) {
@@ -186,9 +214,111 @@ Rectangle {
         anchors.margins: spacing
 
         // Layout HORIZONTAL (ColumnLayout: ListView en haut, indicateurs en bas)
+        Rectangle {
+            id: searchBar
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 44
+            radius: 22
+            color: Qt.rgba(
+                parseInt((colors.background || "#1a1a1a").slice(1,3),16)/255,
+                parseInt((colors.background || "#1a1a1a").slice(3,5),16)/255,
+                parseInt((colors.background || "#1a1a1a").slice(5,7),16)/255,
+                0.6
+            )
+            border.color: searchField.activeFocus
+                ? (colors.color13 || "#73ff00")
+                : (colors.color0 || "#ffffff")
+            border.width: searchField.activeFocus ? 2 : 1
+
+            Behavior on border.color { ColorAnimation { duration: 150 } }
+
+            // Icône loupe
+            Text {
+                anchors.left: parent.left
+                anchors.leftMargin: 14
+                anchors.verticalCenter: parent.verticalCenter
+                text: "\uf002"
+                font.family: "Font Awesome 7 Free Solid"
+                font.pixelSize: 15
+                color: colors.foreground || "#ffffff"
+                opacity: 0.5
+            }
+
+            TextField {
+                id: searchField
+                anchors.left: parent.left
+                anchors.right: clearBtn.left
+                anchors.leftMargin: 38
+                anchors.rightMargin: 4
+                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height - 4
+
+                placeholderText: "Rechercher un jeu…"
+                placeholderTextColor: colors.color14 || "#ffffff"
+                color: colors.foreground || "#ffffff"
+                font.pixelSize: 14
+                font.family: "Open Sans Regular"
+                background: Item {}
+
+                Keys.onEscapePressed: {
+                    launcher.searchText = ""
+                    searchField.clear()
+                    launcher.forceActiveFocus()
+                }
+                Keys.onReturnPressed: {
+                    launcher.launchSelectedGame()
+                }
+                Keys.onUpPressed:    { launcher.navigateUp();    launcher.forceActiveFocus() }
+                Keys.onDownPressed:  { launcher.navigateDown();  launcher.forceActiveFocus() }
+                Keys.onLeftPressed:  { launcher.navigateLeft();  launcher.forceActiveFocus() }
+                Keys.onRightPressed: { launcher.navigateRight(); launcher.forceActiveFocus() }
+
+                onTextChanged: launcher.searchText = text
+            }
+
+            // Bouton ✕ pour vider
+            Rectangle {
+                id: clearBtn
+                anchors.right: parent.right
+                anchors.rightMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
+                width: 26; height: 26; radius: 13
+                color: clearMouse.containsMouse ? Qt.rgba(1,1,1,0.15) : "transparent"
+                visible: launcher.searchText !== ""
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "✕"
+                    font.pixelSize: 12
+                    color: colors.foreground || "#ffffff"
+                    opacity: 0.7
+                }
+
+                MouseArea {
+                    id: clearMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        launcher.searchText = ""
+                        searchField.clear()
+                        launcher.forceActiveFocus()
+                    }
+                }
+            }
+        }
+        // ── Fin barre de recherche ───────────────────────────────────────────
+
+        // Layout HORIZONTAL
         ColumnLayout {
             visible: launcher.orientation === "horizontal"
-            anchors.fill: parent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: searchBar.bottom
+            anchors.bottom: parent.bottom
+            anchors.topMargin: launcher.spacing
             spacing: launcher.spacing
 
             ListView {
@@ -212,15 +342,15 @@ Rectangle {
                 MouseArea {
                     anchors.fill: parent
                     propagateComposedEvents: true
-                    focus: false  // Don't steal focus from launcher
+                    focus: false
                     onWheel: (wheel) => {
                         if (wheel.angleDelta.y > 0) navigateLeft()
                         else if (wheel.angleDelta.y < 0) navigateRight()
-                        launcher.forceActiveFocus()  // Restore focus after wheel
+                        launcher.forceActiveFocus()
                         wheel.accepted = true
                     }
                     onClicked: (mouse) => {
-                        launcher.forceActiveFocus()  // Restore focus after click
+                        launcher.forceActiveFocus()
                         mouse.accepted = false
                     }
                 }
@@ -305,13 +435,14 @@ Rectangle {
             }
         }
 
-        // Layout VERTICAL (RowLayout: GridView à gauche, indicateurs à droite)
+        // Layout VERTICAL
         RowLayout {
             visible: launcher.orientation === "vertical"
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.top: parent.top
+            anchors.top: searchBar.bottom
             anchors.bottom: parent.bottom
+            anchors.topMargin: launcher.spacing
             spacing: launcher.spacing
 
             GridView {
@@ -331,15 +462,15 @@ Rectangle {
                 MouseArea {
                     anchors.fill: parent
                     propagateComposedEvents: true
-                    focus: false  // Don't steal focus from launcher
+                    focus: false
                     onWheel: (wheel) => {
                         if (wheel.angleDelta.y > 0) navigateUp()
                         else if (wheel.angleDelta.y < 0) navigateDown()
-                        launcher.forceActiveFocus()  // Restore focus after wheel
+                        launcher.forceActiveFocus()
                         wheel.accepted = true
                     }
                     onClicked: (mouse) => {
-                        launcher.forceActiveFocus()  // Restore focus after click
+                        launcher.forceActiveFocus()
                         mouse.accepted = false
                     }
                 }
@@ -393,7 +524,6 @@ Rectangle {
                     anchors.centerIn: parent
                     spacing: 12
 
-                    // Dots verticaux
                     Column {
                         anchors.horizontalCenter: parent.horizontalCenter
                         spacing: 6
@@ -410,7 +540,6 @@ Rectangle {
                         }
                     }
 
-                    // Counter
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: filteredGames.length > 0 ? (selectedIndex + 1) + "/" + filteredGames.length : "0"
@@ -419,7 +548,6 @@ Rectangle {
                         opacity: 0.6
                     }
 
-                    // Hints verticaux
                     Column {
                         anchors.horizontalCenter: parent.horizontalCenter
                         spacing: 2
