@@ -223,6 +223,12 @@ Contributions bienvenues! N'hésitez pas à:
 - Ajouter des séquences RGB
 - Améliorer la documentation
 
+## ☕ Support
+
+If you like this project, consider buying me a coffee!
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/waxdred)
+
 ## 📝 Licence
 
 MIT License - Libre d'utilisation et modification
