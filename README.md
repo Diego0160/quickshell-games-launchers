@@ -1,68 +1,49 @@
 # Quickshell Launchers
+Collection of Quickshell launchers for Hyprland with pywal/wallust integration.
 
-Collection de launchers Quickshell pour Hyprland avec intégration pywal/wallust.
+![Game Launcher Preview](__game-launcher/Readme/asset/image.png__)
 
-![Game Launcher Preview](game-launcher/image.png)
-
-## 📦 Projets
+## 📦 Projects
 
 ### 🎮 Game Launcher
-Launcher de jeux avec support multi-plateformes et interface élégante.
 
-![Game Preview](game-launcher/image_2.png)
+Game launcher with multi-platform support and a sleek interface.
 
-**Fonctionnalités:**
-- 🎯 Support Steam, jeux non-Steam, Heroic (Epic/GOG/Amazon), et jeux manuels
-- 🎮 Détection automatique des jeux non-Steam ajoutés à Steam (via shortcuts.vdf)
-- 🖼️ Couvertures automatiques depuis Steam/SteamGridDB
-- 🏷️ Badges de plateforme et catégories
-- ⭐ Système de favoris
-- 🆕 Indicateurs NEW/RECENT
-- 🎨 Thème pywal/wallust automatique
-- ⌨️ Navigation clavier et molette
-- 📚 Vue bibliothèque avec chemins d'installation
+![Game Launcher](__game-launcher/Readme/asset/image_2.png__)
 
-**Contrôles:**
-- Rechercher un jeu...
-- `←` `→` : Navigation
-- `Enter` : Lancer le jeu
-- `Double-clic` : Lancer le jeu
-- `Esc` : Fermer
-- `Molette` : Naviguer
+**Features:**
+- 🎯 Support for Steam, non-Steam games, Heroic (Epic/GOG/Amazon), and manual entries
+- 🎮 Automatic detection of non-Steam games added to Steam (via shortcuts.vdf)
+- 🖼️ Automatic cover art from Steam/SteamGridDB
+- 🏷️ Platform badges and categories
+- ⭐ Favorites system
+- 🆕 NEW/RECENT indicators
+- 🎨 Automatic pywal/wallust theming
+- ⌨️ Keyboard and scroll wheel navigation
+- 📚 Library view with installation paths
 
-### 🌈 RGB Launcher
-Contrôleur OpenRGB avec 8 séquences d'animation + couleurs fixes.
-
-![Rgb Launcher Preview](rgb-launcher/image_openrgb.png)
-
-**Séquences:**
-1. 🌊 **Ocean Wave** - Vague océanique fluide
-2. 🔥 **Fire Dance** - Flammes dansantes
-3. 🌲 **Forest Breath** - Respiration de forêt
-4. 🌸 **Cherry Blossom** - Pétales de cerisier
-5. 💻 **Matrix Rain** - Pluie Matrix style
-6. 🌌 **Aurora Borealis** - Aurore boréale
-7. ⚡ **Lightning Storm** - Orage électrique
-8. 🌃 **Neon City** - Ville néon cyberpunk
-
-**Couleurs fixes:**
-Rouge, Vert, Bleu, Cyan, Magenta, Jaune, Blanc, Orange, Violet, Rose, Lime, Azure
+**Controls:**
+- `←` `→` : Navigate
+- `Enter` : Launch game
+- `Double-click` : Launch game
+- `Esc` : Close
+- `Scroll wheel` : Navigate
 
 ## 🛠️ Installation
 
-### Prérequis
+### Prerequisites
 
 ```bash
 # Arch Linux
-sudo pacman -S python qt6-declarative python-openrgb python-watchdog
+sudo pacman -S python qt6-declarative
 
-# Bibliothèque VDF pour Steam (jeux non-Steam)
+# VDF library for Steam (non-Steam games)
 pip install vdf
 
 # Quickshell
 yay -S quickshell-git
 
-# Font Awesome 7 (pour les icônes)
+# Font Awesome 7 (for icons)
 yay -S ttf-font-awesome-7
 ```
 
@@ -70,26 +51,29 @@ yay -S ttf-font-awesome-7
 
 #### Game Launcher
 
-1. **Configurer Steam:**
+1. **Configure Steam:**
+
 ```toml
 # game-launcher/config.toml
 [steam]
 enabled = true
 library_paths = [
-    "~/.local/share/Steam/steamapps",
-    "/mnt/games/Steam/steamapps",  # Ajoutez vos chemins
+  "~/.local/share/Steam/steamapps",
+  "/mnt/games/Steam/steamapps",  # Add your paths
 ]
-Optionnel Steamgrid si clef Api:
+
+# Optional SteamGridDB API key
 api_key = ""
 ```
 
-2. **Configurer Heroic:**
+2. **Configure Heroic:**
+
 ```toml
 [heroic]
 enabled = true
 config_paths = [
-    "~/.config/heroic",
-    "~/.var/app/com.heroicgameslauncher.hgl/config/heroic",  # Flatpak
+  "~/.config/heroic",
+  "~/.var/app/com.heroicgameslauncher.hgl/config/heroic",  # Flatpak
 ]
 scan_epic = true
 scan_gog = true
@@ -97,152 +81,89 @@ scan_amazon = true
 scan_sideload = true
 ```
 
-3. **Ajouter des jeux manuels:**
+3. **Add manual games:**
+
 ```toml
 # game-launcher/games.toml
-[[games]]
-name = "Mon Jeu"
-exec = "chemin/vers/jeu"
-image = "~/Pictures/games/mon-jeu.png"
-category = "fps"
-favorite = true
+[[entries]]
+title = "📚 Game Library"
+launch_command = "kitty -e python3 /home/florian/.config/quickshell/game-launcher/module/service/list_games.py"
+path_box_art = "library.png"
 ```
 
-3. **Script de lancement du quikshell game:**
+4. **Create the box-art folder:**
 
-    ~/.config/quickshell/game-launcher/toggle.sh
-
-Hyprland key:
-
-    bind = SUPER, G, exec, ~HOME/.config/quickshell/game-launcher/toggle.sh
-
-
-5. **Créer le dossier box-art:**
 ```bash
 mkdir -p ~/.config/quickshell/game-launcher/box-art
 ```
 
-#### RGB Launcher
-
-1. **Installer OpenRGB SDK:**
-```bash
-# OpenRGB doit être lancé avec le serveur SDK activé
-# Settings → Enable SDK Server
-```
-
-2. **Configurer les modes:**
-```toml
-# rgb-launcher/config.toml
-[[modes]]
-name = "Ocean Wave"
-command = "python3 /home/USER/.config/hypr/Openrgb/OpenRGB_Controller.py sequence_1"
-icon = "\uf773"
-icon_font = "Font Awesome 7 Free Solid"
-category = "sequences"
-```
-
-## 🎨 Thème Pywal/Wallust
-
-Les launchers s'intègrent automatiquement avec pywal/wallust.
-
-**Fichier de couleurs:** `~/.cache/wal/wal.json`
-
-**Couleurs utilisées:**
-- `background` : Fond principal
-- `foreground` : Texte
-- `color0-15` : Badges, bordures, effets
-
-## 🚀 Utilisation
+## 🚀 Usage
 
 ### Game Launcher
 
 ```bash
-# Lancer depuis Quickshell
+# Launch from Quickshell
 quickshell game-launcher/GameLauncher.qml
 
-# Voir la bibliothèque complète
+# View the full library
 python3 game-launcher/list_games.py
 ```
 
-### RGB Launcher
-
-```bash
-# Lancer depuis Quickshell
-quickshell rgb-launcher/RGBLauncher.qml
-
-# Contrôle direct
-python3 /path/to/OpenRGB_Controller.py sequence_1
-python3 /path/to/OpenRGB_Controller.py fixed_rouge
-python3 /path/to/OpenRGB_Controller.py off
-```
-
-## 📁 Structure du Projet
+## 📁 Project Structure
 
 ```
 quickshell/
 ├── game-launcher/
-│   ├── backend.py              # Scan jeux Steam/Heroic/manuels
-│   ├── list_games.py           # Affiche bibliothèque + chemins
-│   ├── GameCard.qml            # Composant carte de jeu
-│   ├── GameLauncher.qml        # Interface principale
-│   ├── config.toml             # Configuration
-│   ├── games.toml              # Jeux manuels
-│   └── box-art/                # Couvertures
-│
-├── rgb-launcher/
-│   ├── backend.py              # Backend RGB
-│   ├── RGBLauncher.qml         # Interface RGB
-│   └── config.toml             # Configuration RGB
-│
-└── README.md
+│   └── box-art/                    # Manual game covers
+│   └── modules/                    # Components and scripts
+│       ├── GameCard.qml            # Game card component
+│       ├── GameLauncher.qml        # Main interface
+│       └── service/                # Scripts
+│           ├── backend.py          # Steam/Heroic/manual game scanner
+│           └── list_games.py       # Displays library + paths
+└── Readme/                         # Readme
+│   └── asset/
+│   └── README.md
+│   config.toml
+│   shell.qml
+└   toggle.sh
 ```
 
-## 🎯 Fonctionnalités Techniques
+## 🎯 Technical Features
 
 ### Game Launcher
-- **QML/Qt6** - Interface moderne avec MultiEffect
-- **Python 3.11+** - Backend avec tomllib
-- **Layer Masking** - Coins arrondis natifs sur images
-- **Carousel horizontal** - Navigation fluide avec animations
-- **ACF Parsing** - Extraction chemins Steam
-- **VDF Binary Parsing** - Détection jeux non-Steam via shortcuts.vdf
-- **AppID Conversion** - Conversion correcte des AppID Steam pour lancement
-- **JSON Parsing** - Support Heroic Games Launcher
 
-### RGB Launcher
-- **OpenRGB Python SDK** - Contrôle RGB
-- **Animations multi-phases** - Effets complexes
-- **Interpolation couleurs** - Transitions fluides
-- **Threading** - Animations asynchrones
+- **QML/Qt6** — Modern interface with MultiEffect
+- **Python 3.11+** — Backend using tomllib
+- **Layer Masking** — Native rounded corners on images
+- **Horizontal Carousel** — Smooth navigation with animations
+- **ACF Parsing** — Steam path extraction
+- **VDF Binary Parsing** — Non-Steam game detection via shortcuts.vdf
+- **AppID Conversion** — Correct Steam AppID conversion for launching
+- **JSON Parsing** — Heroic Games Launcher support
 
-## 🤝 Contribution
+## 🤝 Contributing
 
-Contributions bienvenues! N'hésitez pas à:
-- Signaler des bugs
-- Proposer des améliorations
-- Ajouter des séquences RGB
-- Améliorer la documentation
+Contributions are welcome! Feel free to:
 
-## ☕ Support
+- Report bugs
+- Suggest improvements
+- Add RGB sequences
+- Improve documentation
 
-If you like this project, consider buying me a coffee!
+## 📝 License
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/waxdred)
+MIT License — Free to use and modify
 
-## 📝 Licence
+## 🙏 Credits
 
-MIT License - Libre d'utilisation et modification
-
-## 🙏 Crédits
-
-- **Quickshell** - Framework QML pour Wayland
-- **OpenRGB** - Contrôle RGB universel
-- **pywal/wallust** - Génération de palettes
-- **Font Awesome** - Icônes
-- **Steam/Heroic** - Plateformes de jeux
+- **Quickshell** — QML framework for Wayland
+- **pywal/wallust** — Color palette generation
+- **Font Awesome** — Icons
+- **Steam/Heroic** — Gaming platforms
 
 ---
 
-**Auteur:** Florian
-**Version:** 1.0.0
-**Date:** 2025
+**Author:** Florian  
+**Version:** 1.0.1  
+**Date:** 2026
