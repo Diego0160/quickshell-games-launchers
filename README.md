@@ -31,6 +31,30 @@ Game launcher with multi-platform support and a sleek interface.
 
 ## 🛠️ Installation
 
+### Method 1 — AUR (recommended)
+
+```bash
+yay -S quickshell-games-launchers-git
+```
+
+The first run of `quickshell-game` will automatically copy the configuration
+to `~/.config/quickshell/game-launcher/`.
+
+### Method 2 — Manual (makepkg)
+
+```bash
+git clone https://aur.archlinux.org/quickshell-games-launchers-git.git
+cd quickshell-games-launchers-git
+makepkg -si
+```
+
+### Method 3 — From source
+
+```bash
+git clone https://github.com/Eaquo/quickshell-games-launchers.git
+cp -r quickshell-games-launchers/game-launcher ~/.config/quickshell/game-launcher
+```
+
 ### Prerequisites
 
 ```bash
@@ -154,6 +178,12 @@ Contributions are welcome! Feel free to:
 ## 📝 License
 
 MIT License — Free to use and modify
+
+## ☕ Support
+
+If you like this project, consider buying me a coffee!
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/waxdred)
 
 ## 🙏 Credits
 
