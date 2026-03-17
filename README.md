@@ -1,199 +1,125 @@
 # Quickshell Launchers
-Collection of Quickshell launchers for Hyprland with pywal/wallust integration.
 
-![Game Launcher Preview](asset/image.png)
+Des launchers Quickshell pour Hyprland, avec intégration pywal/wallust.
 
-## 📦 Projects
 
-### 🎮 Game Launcher
 
-Game launcher with multi-platform support and a sleek interface.
+![Preview](asset/image.png)
+
+
+
+---
+
+## Game Launcher
+
+
 
 ![Game Launcher Preview](asset/image_2.png)
 
-**Features:**
-- 🎯 Support for Steam, non-Steam games, Heroic (Epic/GOG/Amazon), and manual entries
-- 🎮 Automatic detection of non-Steam games added to Steam (via shortcuts.vdf)
-- 🖼️ Automatic cover art from Steam/SteamGridDB
-- 🏷️ Platform badges and categories
-- ⭐ Favorites system
-- 🆕 NEW/RECENT indicators
-- 🎨 Automatic pywal/wallust theming
-- ⌨️ Keyboard and scroll wheel navigation
-- 📚 Library view with installation paths
 
-**Controls:**
-- `←` `→` : Navigate
-- `Enter` : Launch game
-- `Double-click` : Launch game
-- `Esc` : Close
-- `Scroll wheel` : Navigate
 
-## 🛠️ Installation
+Un launcher de jeux fait pour Hyprland. Il récupère automatiquement tes jeux Steam, Heroic (Epic/GOG/Amazon) et les entrées manuelles, et les affiche dans un carousel horizontal avec la cover art.
 
-### Method 1 — AUR (recommended)
+Ce qui fonctionne :
+- Détection des jeux non-Steam ajoutés via Steam (parsing du shortcuts.vdf)
+- Récupération automatique des covers depuis Steam et SteamGridDB
+- Badges par plateforme, système de favoris, indicateurs NEW/RECENT
+- Thème automatique via pywal/wallust
+- Navigation clavier et molette
+
+**Contrôles :** `←` `→` pour naviguer, `Enter` ou double-clic pour lancer, `Esc` pour fermer.
+
+---
+
+## Installation
+
+### Via AUR (le plus simple)
 
 ```bash
 yay -S quickshell-games-launchers-git
-```
-
-The first run of `quickshell-game` will automatically copy the configuration
-to `~/.config/quickshell/game-launcher/`.
-
-### Method 2 — Manual (makepkg)
-
-```bash
+Au premier lancement de quickshell-game, la config se copie automatiquement dans ~/.config/quickshell/game-launcher/.
+Avec makepkg
 git clone https://aur.archlinux.org/quickshell-games-launchers-git.git
 cd quickshell-games-launchers-git
 makepkg -si
-```
-
-### Method 3 — From source
-
-```bash
+Depuis les sources
 git clone https://github.com/Eaquo/quickshell-games-launchers.git
 cp -r quickshell-games-launchers/game-launcher ~/.config/quickshell/game-launcher
-```
+Dépendances
 
-### Prerequisites
-
-```bash
-# Arch Linux
+# Arch
 sudo pacman -S python qt6-declarative
 
-# VDF library for Steam (non-Steam games)
+# Pour le parsing Steam (non-Steam games)
 pip install vdf
 
 # Quickshell
 yay -S quickshell-git
 
-# Font Awesome 7 (for icons)
+# Icônes
 yay -S ttf-font-awesome-7
-```
 
-### Configuration
-
-#### Game Launcher
-
-1. **Configure Steam:**
-
-```toml
-# game-launcher/config.toml
+Configuration
+Le fichier principal est game-launcher/config.toml.
+Steam :
 [steam]
 enabled = true
 library_paths = [
   "~/.local/share/Steam/steamapps",
-  "/mnt/games/Steam/steamapps",  # Add your paths
+  "/mnt/games/Steam/steamapps",
 ]
-
-# Optional SteamGridDB API key
-api_key = ""
-```
-
-2. **Configure Heroic:**
-
-```toml
+api_key = ""  # SteamGridDB (optionnel mais recommandé pour les covers)
+Heroic :
 [heroic]
 enabled = true
 config_paths = [
   "~/.config/heroic",
-  "~/.var/app/com.heroicgameslauncher.hgl/config/heroic",  # Flatpak
+  "~/.var/app/com.heroicgameslauncher.hgl/config/heroic",
 ]
 scan_epic = true
 scan_gog = true
 scan_amazon = true
 scan_sideload = true
-```
-
-3. **Add manual games:**
-
-```toml
-# game-launcher/games.toml
+Jeux manuels (games.toml) :
 [[entries]]
 title = "📚 Game Library"
-launch_command = "kitty -e python3 /home/florian/.config/quickshell/game-launcher/module/service/list_games.py"
+launch_command = "kitty -e python3 ~/.config/quickshell/game-launcher/module/service/list_games.py"
 path_box_art = "library.png"
-```
-
-4. **Create the box-art folder:**
-
-```bash
+Crée aussi le dossier pour tes covers manuelles :
 mkdir -p ~/.config/quickshell/game-launcher/box-art
-```
-
-## 🚀 Usage
-
-### Game Launcher
-
-```bash
-# Launch from Quickshell
+Utilisation
+# Lancer le launcher
 quickshell game-launcher/GameLauncher.qml
 
-# View the full library
+# Voir la liste complète de la bibliothèque
 python3 game-launcher/list_games.py
-```
-
-## 📁 Project Structure
-
-```
+Structure
 quickshell/
 ├── game-launcher/
-│   └── box-art/                    # Manual game covers
-│   └── modules/                    # Components and scripts
-│       ├── GameCard.qml            # Game card component
-│       ├── GameLauncher.qml        # Main interface
-│       └── service/                # Scripts
-│           ├── backend.py          # Steam/Heroic/manual game scanner
-│           └── list_games.py       # Displays library + paths
-└── Readme/                         # Readme
-│   └── asset/
-│   └── README.md
-│   config.toml
-│   shell.qml
-└   toggle.sh
-```
-
-## 🎯 Technical Features
-
-### Game Launcher
-
-- **QML/Qt6** — Modern interface with MultiEffect
-- **Python 3.11+** — Backend using tomllib
-- **Layer Masking** — Native rounded corners on images
-- **Horizontal Carousel** — Smooth navigation with animations
-- **ACF Parsing** — Steam path extraction
-- **VDF Binary Parsing** — Non-Steam game detection via shortcuts.vdf
-- **AppID Conversion** — Correct Steam AppID conversion for launching
-- **JSON Parsing** — Heroic Games Launcher support
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to:
-
-- Report bugs
-- Suggest improvements
-- Add RGB sequences
-- Improve documentation
-
-## 📝 License
-
-MIT License — Free to use and modify
-
-## ☕ Support
-
-If you like this project, consider buying me a coffee!
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/waxdred)
-
-## 🙏 Credits
-
-- **Quickshell** — QML framework for Wayland
-- **pywal/wallust** — Color palette generation
-- **Font Awesome** — Icons
-- **Steam/Heroic** — Gaming platforms
-
----
-
-**Author:** Florian  
-**Version:** 1.0.1  
-**Date:** 2026
+│   ├── box-art/          # Covers manuelles
+│   ├── modules/
+│   │   ├── GameCard.qml
+│   │   ├── GameLauncher.qml
+│   │   └── service/
+│   │       ├── backend.py       # Scanner Steam/Heroic/manuel
+│   │       └── list_games.py    # Affichage bibliothèque
+│   ├── config.toml
+│   └── shell.qml
+└── toggle.sh
+Stack technique
+QML/Qt6 avec MultiEffect pour l'interface
+Python 3.11+ avec tomllib pour le backend
+Parsing ACF et VDF binaire pour Steam
+Conversion AppID pour les lancements corrects
+Support JSON pour Heroic
+Contribuer
+Issues, PRs, retours d'expérience — tout est bienvenu. Notamment si tu rencontres des cas particuliers avec Heroic ou des bibliothèques Steam non-standard.
+Licence
+MIT
+Support
+[
+�
+Charger l'image
+](https://ko-fi.com/waxdred)
+Merci à Quickshell, pywal/wallust, Font Awesome, et évidemment Steam et Heroic.
+Florian — v1.0.1 — 2026
