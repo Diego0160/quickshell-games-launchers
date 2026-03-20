@@ -61,6 +61,7 @@ Rectangle {
     Component.onCompleted: {
         launcher.forceActiveFocus()
         loadGames()
+        gamepadService.running = true
     }
 
     // Available sources computed from data
@@ -146,7 +147,7 @@ Rectangle {
             gamesProcess.output = ""
         }
     }
-
+    
     function loadGames() { gamesProcess.running = true }
 
     function filterGames() {
@@ -195,6 +196,47 @@ Rectangle {
         if (config?.behavior?.close_on_launch ?? true) launcher.closeRequested()
     }
 
+    Process {
+    id: gamepadService
+    command: ["/usr/bin/python3", Qt.resolvedUrl("service/gamepad.py").toString().replace("file://", "")]
+    running: false   // ← false, on démarre dans onCompleted
+
+    stdout: SplitParser {
+        onRead: function(line) {
+            try {
+                var evt = JSON.parse(line)
+                if (evt.type === "button") {
+                    gamepadHandler.handle(evt.action)
+                }
+            } catch(e) {}
+        }
+    }
+}
+ 
+    // ── Handler des actions manette ────────────────────────────────────────────
+    QtObject {
+        id: gamepadHandler
+    
+        function handle(action) {
+            switch(action) {
+                case "left":
+                    navigateLeft()
+                    break
+                case "right":
+                    navigateRight()
+                    break
+                case "select":
+                    launchSelectedGame()
+                    break
+                case "close":
+                    launcher.closeRequested()
+                    break
+                case "toggle":
+                    launcher.visible = !launcher.visible
+                    break
+            }
+        }
+    }
     // ═══════════════════════════════════════════════════════════════════════
     // LAYOUT PRINCIPAL
     // ═══════════════════════════════════════════════════════════════════════
