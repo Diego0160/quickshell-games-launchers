@@ -184,6 +184,16 @@ Rectangle {
         if (filteredGames.length === 0) return
         launchGame(filteredGames[selectedIndex])
     }
+    function navigateSource(direction) {
+        var sources = ["all"].concat(availableSources)
+        var current = sources.indexOf(selectedSource)
+        if (direction === "up")
+            current = (current - 1 + sources.length) % sources.length
+        else
+            current = (current + 1) % sources.length
+        selectedSource = sources[current]
+        selectedIndex = 0  // reset la sélection au changement de filtre
+    }
 
     Process {
         id: launchProcess
@@ -233,6 +243,12 @@ Rectangle {
                     break
                 case "toggle":
                     launcher.visible = !launcher.visible
+                    break
+                case "up":
+                    navigateSource("up")
+                    break
+                case "down":
+                    navigateSource("down")
                     break
             }
         }
