@@ -17,7 +17,11 @@ BUTTON_MAP = {
     ecodes.BTN_SOUTH:  "select",   
     ecodes.BTN_EAST:   "close",    
     ecodes.BTN_START:  "toggle",   
-    ecodes.BTN_MODE:   "toggle",   
+    ecodes.BTN_MODE:   "toggle",
+    ecodes.BTN_DPAD_LEFT:  "left",
+    ecodes.BTN_DPAD_RIGHT: "right",
+    ecodes.BTN_DPAD_UP:    "up",
+    ecodes.BTN_DPAD_DOWN:  "down", 
 }
 
 AXIS_DEADZONE = 0.4 
