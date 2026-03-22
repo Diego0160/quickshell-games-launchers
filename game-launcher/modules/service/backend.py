@@ -75,7 +75,8 @@ class ImageCache:
 class GameLauncher:
     def __init__(self, config_path: str = None):
         if config_path is None:
-            config_path = Path.home() / ".config/quickshell/game-launcher/config.toml"
+            script_dir = Path(os.path.abspath(__file__)).parent
+            config_path = script_dir.parent.parent / "config.toml"
 
         self.config_path = Path(config_path)
         self.config = self.load_config()
