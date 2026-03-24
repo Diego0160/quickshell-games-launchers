@@ -124,6 +124,8 @@ Rectangle {
         }
     }
 
+    Keys.onEscapePressed: Qt.quit()
+
     onSearchTextChanged:   filterGames()
     onSelectedSourceChanged: filterGames()
 
