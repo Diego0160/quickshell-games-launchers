@@ -200,10 +200,9 @@ Rectangle {
         running: false
     }
 
-    function launchGame(game) {
-        launchProcess.command = ["sh", "-c", game.exec]
+    launchProcess.command = ["sh", "-c", "setsid " + game.exec + " &"]
         launchProcess.running = true
-        if (config?.behavior?.close_on_launch ?? true) launcher.closeRequested()
+        if (config?.behavior?.close_on_launch ?? true) Qt.quit()
     }
 
     Process {
