@@ -13,7 +13,10 @@ if [ -f "$PID_FILE" ]; then
     if ps -p "$PID" > /dev/null 2>&1; then
         # Kill the launcher
         kill "$PID"
+        pkill -f "gamepad.py" || true
         rm "$PID_FILE"
+        quickshell -c "$LAUNCHER_DIR" &
+        echo $! > "$PID_FILE"
         exit 0
     else
         # PID file exists but process is dead, clean up
