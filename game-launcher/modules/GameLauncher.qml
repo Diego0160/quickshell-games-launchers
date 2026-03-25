@@ -96,7 +96,7 @@ Rectangle {
                 searchText = ""
                 searchField.clear()
             } else {
-                launcher.closeRequested()
+                Qt.quit()
             }
             event.accepted = true
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
