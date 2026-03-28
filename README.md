@@ -7,9 +7,8 @@ The idea: a fast, good-looking interface that fits your setup — automatic cove
 https://github.com/user-attachments/assets/703e48dd-86d1-49cb-8bc8-1fe45b89e9f5
 
 
-<video src="asset/Quickshell-game.mp4" autoplay loop muted playsinline width="100%"></video>
+<video src="asset/Quickshell-game.mp4" autoplay loop muted playsinline width="50%"></video>
 
-> If the video doesn't play, [click here to watch it](asset/Quickshell-game.mp4)
 
 ![screenshot](asset/image.png)
 ![screenshot 2](asset/image_2.png)
