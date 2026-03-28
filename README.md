@@ -5,9 +5,9 @@ Covers animées, thème adaptatif via pywal/wallust, navigation clavier — et u
 
 https://github.com/user-attachments/assets/703e48dd-86d1-49cb-8bc8-1fe45b89e9f5
 
-![Game Launcher Preview](__asset/image.png__)
+![Game Launcher Preview](__asset/image.png)
 
-![Game Launcher](__/asset/image_2.png__)
+![Game Launcher](asset/image_2.png)
 
 ---
 
