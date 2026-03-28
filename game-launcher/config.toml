@@ -46,7 +46,23 @@ enabled = true
 api_key = ""
 
 # Type d'image à télécharger
-image_type = "grid"
+image_type = "hero"
+prefer_animated = true
+
+# dimensions
+dimensions = [
+]
+styles = [
+]
+parallel_requests = true
+max_workers = 12
+request_timeout = 3
+cache_ttl_hours = 48
+
+# Trier les images par nombre de j'aimes uniquement (true = tri strict par likes)
+sort_by_likes = true
+# Nombre minimum de j'aimes pour accepter une image (0 = pas de filtre)
+min_likes = 0
 
 
 # ╔══════════════════════════════════════════════════════════════════════════╗
