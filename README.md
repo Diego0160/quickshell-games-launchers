@@ -71,8 +71,13 @@ yay -S ttf-font-awesome-7
 ### Hyprland keybind
 
 In `~/.config/hypr/hyprland.conf`:
+Exemple:
 ```conf
 bind = SUPER, G, exec, ~/.config/quickshell/game-launcher/toggle.sh
+```
+Or
+```conf
+bind = SUPER, G, exec, quickshell-game
 ```
 
 ---
