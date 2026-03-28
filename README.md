@@ -3,6 +3,10 @@
 A game launcher built for Hyprland, using Quickshell (Qt6/QML) and a Python backend.
 The idea: a fast, good-looking interface that fits your setup — automatic covers, adaptive theming via wallust, keyboard navigation.
 
+
+https://github.com/user-attachments/assets/703e48dd-86d1-49cb-8bc8-1fe45b89e9f5
+
+
 <video src="asset/Quickshell-game.mp4" autoplay loop muted playsinline width="100%"></video>
 
 > If the video doesn't play, [click here to watch it](asset/Quickshell-game.mp4)
