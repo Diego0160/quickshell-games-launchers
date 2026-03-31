@@ -39,16 +39,16 @@ Game launcher with multi-platform support and a sleek animated interface.
 | `/` or `F` | Focus search bar |
 | `Scroll wheel` | Navigate |
 
-**🎮 Gamepad**
+## 🎮 Gamepad
 
-| Key | Action |
-|-----|--------|
-| `ă` | Navigate the grid |
-| `Enter` | Launch selected game |
-| `Double-click` | Launch a game |
-| `Esc` | Close |
-| `/` or `F` | Focus search bar |
-| `Scroll wheel` | Navigate |
+| Bouton | Action |
+|--------|--------|
+| ![](https://img.shields.io/badge/D--pad-grey?style=flat-square) | Naviguer dans la grille |
+| ![](https://img.shields.io/badge/A-1d7b36?style=flat-square&logo=xbox&logoColor=white) | Lancer le jeu sélectionné |
+| ![](https://img.shields.io/badge/B-c0392b?style=flat-square&logo=xbox&logoColor=white) | Fermer |
+| ![](https://img.shields.io/badge/LB-3a3a5c?style=flat-square) / ![](https://img.shields.io/badge/RB-3a3a5c?style=flat-square) | Naviguer |
+| ![](https://img.shields.io/badge/☰_Menu-333?style=flat-square) | Focus barre de recherche |
+| ![](https://img.shields.io/badge/LS-222?style=flat-square) | Scroll |
 
 ## 🛠️ Installation
 
