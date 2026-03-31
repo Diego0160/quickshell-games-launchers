@@ -39,6 +39,17 @@ Game launcher with multi-platform support and a sleek animated interface.
 | `/` or `F` | Focus search bar |
 | `Scroll wheel` | Navigate |
 
+**🎮 Gamepad**
+
+| Key | Action |
+|-----|--------|
+| `ă` | Navigate the grid |
+| `Enter` | Launch selected game |
+| `Double-click` | Launch a game |
+| `Esc` | Close |
+| `/` or `F` | Focus search bar |
+| `Scroll wheel` | Navigate |
+
 ## 🛠️ Installation
 
 ### Via AUR
