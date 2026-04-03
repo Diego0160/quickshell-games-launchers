@@ -103,4 +103,5 @@ fi
 exec quickshell -p "$CONFIG_DIR/shell.qml" "$@"
 WRAPPER
     chmod 755 "$pkgdir/usr/bin/quickshell-game"
+    chmod +x "$CONFIG_DIR/toggle.sh"
 }
