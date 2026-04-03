@@ -104,5 +104,6 @@ chmod +x "$CONFIG_DIR/toggle.sh" 2>/dev/null || true
 exec quickshell -p "$CONFIG_DIR/shell.qml" "$@"
 WRAPPER
     chmod 755 "$pkgdir/usr/bin/quickshell-game"
-    chmod +x "$pkgdir/usr/share/quickshell-games-launchers/game-launcher/toggle.sh"
+    [[ -f "$pkgdir/usr/share/quickshell-games-launchers/game-launcher/toggle.sh" ]] && \
+        chmod +x "$pkgdir/usr/share/quickshell-games-launchers/game-launcher/toggle.sh"
 }
