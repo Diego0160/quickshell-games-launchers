@@ -13,7 +13,7 @@ import binascii
 import vdf
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
-from .sgdb import SGDBClient
+from sgdb import SGDBClient
 
 
 class ImageCache:
