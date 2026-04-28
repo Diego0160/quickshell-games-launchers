@@ -5,6 +5,8 @@ import struct
 import binascii
 from pathlib import Path
 
+_LINE_WIDTH = 80
+
 def find_steam_userdata():
     """Trouve le répertoire userdata de Steam"""
     steam_path = Path.home() / ".local/share/Steam/userdata"
@@ -63,7 +65,7 @@ def main():
 
         user_id = user_dir.name
         print(f"📁 Utilisateur Steam: {user_id}")
-        print("=" * 80)
+        print("=" * _LINE_WIDTH)
 
         for idx, app in shortcuts.get('shortcuts', {}).items():
             app_name = app.get('AppName', 'Unknown')
@@ -104,7 +106,7 @@ def main():
             print(f"      steam -applaunch {short_appid}")
             print(f"      xdg-open steam://rungameid/{long_appid}")
             print(f"      protontricks {short_appid} --version")
-            print("-" * 80)
+            print("-" * _LINE_WIDTH)
 
     if not found_games:
         if search_term:
