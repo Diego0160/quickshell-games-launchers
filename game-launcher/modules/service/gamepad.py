@@ -119,48 +119,46 @@ def process_device(device):
     except OSError:
         print(json.dumps({"type": "info", "msg": f"Disconnected: {device.name}"}), flush=True)
 
+def _is_gamepad(path):
+    """Retourne (device, phys) si le chemin correspond à un gamepad, sinon None."""
+    try:
+        device = evdev.InputDevice(path)
+        caps = device.capabilities()
+        has_buttons = ecodes.EV_KEY in caps and any(
+            b in caps[ecodes.EV_KEY]
+            for b in [ecodes.BTN_SOUTH, ecodes.BTN_A, ecodes.BTN_GAMEPAD]
+        )
+        if has_buttons and ecodes.EV_ABS in caps:
+            return device, (device.phys or device.name)
+    except Exception:  # périphérique inaccessible : ignoré
+        pass
+    return None
+
 def find_gamepads():
     devices = []
-    seen_phys = set()          
+    seen_phys = set()
     for path in evdev.list_devices():
-        try:
-            dev = evdev.InputDevice(path)
-            caps = dev.capabilities()
-            has_buttons = ecodes.EV_KEY in caps and any(
-                b in caps[ecodes.EV_KEY]
-                for b in [ecodes.BTN_SOUTH, ecodes.BTN_A, ecodes.BTN_GAMEPAD]
-            )
-            has_axes = ecodes.EV_ABS in caps
-            phys = dev.phys or dev.name
-            if has_buttons and has_axes and phys not in seen_phys:
+        result = _is_gamepad(path)
+        if result:
+            device, phys = result
+            if phys not in seen_phys:
                 seen_phys.add(phys)
-                devices.append(dev)
-        except Exception:
-            continue
+                devices.append(device)
     return devices
 
 def monitor_hotplug(known_paths: set, seen_phys: set):
     while True:
         time.sleep(2)
         current = set(evdev.list_devices())
-        new_paths = current - known_paths
-        for path in new_paths:
-            try:
-                dev = evdev.InputDevice(path)
-                caps = dev.capabilities()
-                has_buttons = ecodes.EV_KEY in caps and any(
-                    b in caps[ecodes.EV_KEY]
-                    for b in [ecodes.BTN_SOUTH, ecodes.BTN_A, ecodes.BTN_GAMEPAD]
-                )
-                has_axes = ecodes.EV_ABS in caps
-                phys = dev.phys or dev.name
-                if has_buttons and has_axes and phys not in seen_phys:
+        for path in current - known_paths:
+            result = _is_gamepad(path)
+            if result:
+                device, phys = result
+                if phys not in seen_phys:
                     seen_phys.add(phys)
                     known_paths.add(path)
-                    t = threading.Thread(target=process_device, args=(dev,), daemon=True)
+                    t = threading.Thread(target=process_device, args=(device,), daemon=True)
                     t.start()
-            except Exception:
-                continue
         known_paths &= current
 
 def main():
