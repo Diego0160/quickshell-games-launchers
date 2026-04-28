@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 import json
 import os
+import sqlite3
 import sys
 import tomllib
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 import re
 import urllib.request
-import urllib.error
 import struct
 import binascii
 import vdf
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
+from .sgdb import SGDBClient
 
 
 class ImageCache:
@@ -65,6 +66,12 @@ class ImageCache:
             self._save_cache()
 
 
+# Constantes de conversion AppID Steam (shortcuts.vdf → steam://rungameid/)
+_HEX_BASE            = 16
+_APPID_UPPER_SHIFT   = 32
+_STEAM_SHORTCUT_FLAG = 0x02000000
+
+
 class GameLauncher:
     def __init__(self, config_path: str = None):
         if config_path is None:
@@ -79,9 +86,36 @@ class GameLauncher:
         cache_ttl = self.config.get("steamgriddb", {}).get("cache_ttl_hours", 24)
         self.image_cache = ImageCache(cache_file, ttl_hours=cache_ttl)
         self.image_cache.clear_expired()
+        self.sgdb = SGDBClient(self.config, self.image_cache)
 
         # Detect Heroic installation once at startup
         self._heroic_bin: Optional[str] = self._detect_heroic()
+        # Detect Lutris installation once at startup
+        self._lutris_bin: Optional[str] = self._detect_lutris()
+
+    # ── Lutris detection ───────────────────────────────────────────────────
+
+    def _detect_lutris(self) -> Optional[str]:
+        import shutil
+        if shutil.which("lutris"):
+            return "lutris"
+
+        # Flatpak
+        flatpak_paths = [
+            Path("/var/lib/flatpak/app/net.lutris.Lutris"),
+            Path.home() / ".local/share/flatpak/app/net.lutris.Lutris",
+        ]
+        for p in flatpak_paths:
+            if p.exists():
+                return "flatpak run net.lutris.Lutris"
+
+        return None
+
+    def get_lutris_exec(self, game_id: int) -> str:
+        url = f"lutris:rungameid/{game_id}"
+        if self._lutris_bin is None:
+            return f"xdg-open {url}"
+        return f"{self._lutris_bin} {url}"
 
     # ── Heroic detection ───────────────────────────────────────────────────
 
@@ -226,208 +260,6 @@ class GameLauncher:
 
         return fallback_urls[0]
 
-    def get_steamgriddb_cover_url(self, app_id: str, platform: str = "steam", game_name: str = "") -> Optional[str]:
-        sgdb_config = self.config.get("steamgriddb", {})
-        if not sgdb_config.get("enabled", False):
-            return None
-        api_key = sgdb_config.get("api_key", "")
-        if not api_key:
-            return None
-
-        anim_suffix = "animated" if sgdb_config.get("prefer_animated", False) else "static"
-        cache_key = f"{platform}:{app_id}:{sgdb_config.get('image_type', 'grid')}:{anim_suffix}"
-        cached_url = self.image_cache.get(cache_key)
-        if cached_url is not None:
-            return cached_url if cached_url else None
-
-        image_type = sgdb_config.get("image_type", "grid")
-        endpoint_map = {"grid": "grids", "hero": "heroes", "logo": "logos", "icon": "icons"}
-        endpoint = endpoint_map.get(image_type, "grids")
-
-        def score_image(img):
-            likes = img.get("likes") or 0  # None → 0
-            # Tri strict par j'aimes si activé dans config
-            if sgdb_config.get("sort_by_likes", False):
-                return likes
-
-            score = likes * 1000
-            if img.get("width") and img.get("height"):
-                score += img["width"] * img["height"] // 100
-            if img.get("mime") == "image/png":
-                score += 500
-
-            return score
-
-        def filter_images(images):
-            images = [img for img in images if img.get("width", 0) >= 300]
-            min_likes = sgdb_config.get("min_likes", 0)
-            if min_likes > 0:
-                filtered = [img for img in images if (img.get("likes") or 0) >= min_likes]
-                if filtered:
-                    images = filtered
-            return images
-
-        def normalize(val, default=None):
-            """String '920x430' ou liste ['920x430'] → toujours une liste propre"""
-            if not val:
-                return default or []
-            if isinstance(val, str):
-                return [v.strip() for v in val.split(",") if v.strip()]
-            return [str(v).strip() for v in val if str(v).strip()]
-
-        dimensions = normalize(sgdb_config.get("dimensions"))
-        styles     = normalize(sgdb_config.get("styles"))
-        base_flags = []
-        if dimensions:
-            base_flags.append(f"dimensions={','.join(dimensions)}")
-        if styles:
-            base_flags.append(f"styles={','.join(styles)}")
-        base_flags.append(f"nsfw={str(sgdb_config.get('nsfw', False)).lower()}")
-        base_flags.append(f"humor={str(sgdb_config.get('humor', False)).lower()}")
-        base_flags.append(f"epilepsy={str(sgdb_config.get('epilepsy', False)).lower()}")
-
-        base_url = f"https://www.steamgriddb.com/api/v2/{endpoint}/{platform}/{app_id}"
-        timeout  = sgdb_config.get("request_timeout", 3)
-
-        def make_url(types_val, with_dims=True, mimes_val=None, url_base=None):
-            p = [f"types={types_val}"]
-            if mimes_val:
-                p.append(f"mimes={mimes_val}")
-            p += [f for f in base_flags if with_dims or not f.startswith("dimensions=")]
-            return (url_base or base_url) + "?" + "&".join(p)
-
-        def do_request(url):
-            """Retourne les images brutes (non filtrées/triées), ou None."""
-            try:
-                req = urllib.request.Request(url)
-                req.add_header("Authorization", f"Bearer {api_key}")
-                req.add_header("User-Agent", "QuickShell-GameLauncher/2.0")
-                req.add_header("Accept", "application/json")
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    data = json.loads(resp.read().decode())
-                    if data.get("success") and data.get("data"):
-                        return data["data"]
-            except urllib.error.HTTPError as e:
-                if e.code == 404:
-                    self.image_cache.set(cache_key, "")
-            except Exception:
-                pass
-            return None
-
-        def best_image(raw_images, prefer_webm=False):
-            """Filtre, trie et retourne la meilleure URL, ou None."""
-            if not raw_images:
-                return None
-            imgs = filter_images(raw_images)
-            if not imgs:
-                return None
-            if prefer_webm:
-                # Préférer WebM parmi les animés, sinon prendre le meilleur du lot
-                webm = [i for i in imgs if i.get("mime") == "image/webm"]
-                pool = sorted(webm or imgs, key=score_image, reverse=True)
-            else:
-                pool = sorted(imgs, key=score_image, reverse=True)
-            return pool[0].get("url", pool[0].get("thumb"))
-
-        prefer_animated = sgdb_config.get("prefer_animated", False)
-
-        if prefer_animated:
-            # Animés (WebP principalement sur SGDB)
-            raw = do_request(make_url("animated", with_dims=True))
-            if raw is None and dimensions:
-                raw = do_request(make_url("animated", with_dims=False))
-            image_url = best_image(raw, prefer_webm=False)
-            if image_url:
-                self.image_cache.set(cache_key, image_url)
-                return image_url
-
-        # Fallback (ou mode static) : PNG statique
-        raw = do_request(make_url("static", with_dims=True, mimes_val="image/png"))
-        if raw is None and dimensions:
-            raw = do_request(make_url("static", with_dims=False, mimes_val="image/png"))
-        image_url = best_image(raw, prefer_webm=False)
-        if image_url:
-            self.image_cache.set(cache_key, image_url)
-            return image_url
-
-        # Fallback par nom (steam-shortcut + jeux sans ID SGDB valide)
-        if game_name:
-            sgdb_id = self._search_sgdb_id_by_name(game_name, api_key, timeout)
-            if sgdb_id:
-                name_base = f"https://www.steamgriddb.com/api/v2/{endpoint}/game/{sgdb_id}"
-                if prefer_animated:
-                    raw = do_request(make_url("animated", with_dims=True, url_base=name_base))
-                    if raw is None and dimensions:
-                        raw = do_request(make_url("animated", with_dims=False, url_base=name_base))
-                    image_url = best_image(raw, prefer_webm=False)
-                    if image_url:
-                        self.image_cache.set(cache_key, image_url)
-                        return image_url
-                raw = do_request(make_url("static", with_dims=True, mimes_val="image/png", url_base=name_base))
-                if raw is None and dimensions:
-                    raw = do_request(make_url("static", with_dims=False, mimes_val="image/png", url_base=name_base))
-                image_url = best_image(raw, prefer_webm=False)
-                if image_url:
-                    self.image_cache.set(cache_key, image_url)
-                    return image_url
-
-        return None
-
-    def get_steamgriddb_logo_url(self, app_id: str, platform: str = "steam", game_name: str = "") -> Optional[str]:
-        sgdb_config = self.config.get("steamgriddb", {})
-        if not sgdb_config.get("enabled", False):
-            return None
-        api_key = sgdb_config.get("api_key", "")
-        if not api_key:
-            return None
-
-        cache_key = f"{platform}:{app_id}:logo"
-        cached_url = self.image_cache.get(cache_key)
-        if cached_url is not None:
-            return cached_url if cached_url else None
-
-        url = f"https://www.steamgriddb.com/api/v2/logos/{platform}/{app_id}?types=static&mimes=image/png"
-
-        timeout = sgdb_config.get("request_timeout", 3)
-        try:
-            request = urllib.request.Request(url)
-            request.add_header("Authorization", f"Bearer {api_key}")
-            request.add_header("User-Agent", "QuickShell-GameLauncher/2.0")
-            request.add_header("Accept", "application/json")
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                data = json.loads(response.read().decode())
-                if data.get("success") and data.get("data"):
-                    images = data["data"]
-                    if images:
-                        logo_url = images[0].get("url", images[0].get("thumb"))
-                        self.image_cache.set(cache_key, logo_url)
-                        return logo_url
-        except urllib.error.HTTPError as e:
-            if e.code == 404:
-                self.image_cache.set(cache_key, "")
-        except Exception:
-            pass
-
-        # Fallback par nom (steam-shortcut + jeux sans ID SGDB valide)
-        if game_name:
-            sgdb_id = self._search_sgdb_id_by_name(game_name, api_key, timeout)
-            if sgdb_id:
-                name_url = f"https://www.steamgriddb.com/api/v2/logos/game/{sgdb_id}?types=static&mimes=image/png"
-                try:
-                    req2 = urllib.request.Request(name_url)
-                    req2.add_header("Authorization", f"Bearer {api_key}")
-                    req2.add_header("User-Agent", "QuickShell-GameLauncher/2.0")
-                    req2.add_header("Accept", "application/json")
-                    with urllib.request.urlopen(req2, timeout=timeout) as r2:
-                        d2 = json.loads(r2.read().decode())
-                        if d2.get("success") and d2.get("data"):
-                            logo_url = d2["data"][0].get("url", d2["data"][0].get("thumb"))
-                            self.image_cache.set(cache_key, logo_url)
-                            return logo_url
-                except Exception:
-                    pass
-
-        return None
 
     def fetch_images_parallel(self, games: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         sgdb_config = self.config.get("steamgriddb", {})
@@ -454,18 +286,18 @@ class GameLauncher:
 
         def fetch_cover_and_logo(item):
             idx, game = item
-            platform = self.get_steamgriddb_platform(game.get("source", ""), game.get("category", ""))
+            platform = self.sgdb.get_platform(game.get("source", ""), game.get("category", ""))
             appid = game.get("appid")
             name  = game.get("name", "")
 
             # Cover
-            cover_url = self.get_steamgriddb_cover_url(appid, platform, game_name=name)
+            cover_url = self.sgdb.get_cover_url(appid, platform, game_name=name)
             # Steam CDN uniquement pour les vrais jeux Steam (pas les shortcuts)
             if not cover_url and game.get("source") == "steam" and game.get("category") != "steam-shortcut":
                 cover_url = self.get_steam_cdn_fallback_url(appid)
 
             # Logo (toujours PNG transparent)
-            logo_url = self.get_steamgriddb_logo_url(appid, platform, game_name=name)
+            logo_url = self.sgdb.get_logo_url(appid, platform, game_name=name)
 
             return idx, cover_url, logo_url
 
@@ -479,73 +311,12 @@ class GameLauncher:
                     if logo_url:
                         games[idx]["logo"] = logo_url
                 except Exception:
-                    pass
+                    pass  # future annulée ou erreur inattendue : ignorée
 
         return games
-
-        def fetch_image(item):
-            idx, game = item
-            platform = self.get_steamgriddb_platform(game.get("source", ""), game.get("category", ""))
-            url = self.get_steamgriddb_cover_url(game.get("appid"), platform)
-            if not url and game.get("source") == "steam":
-                url = self.get_steam_cdn_fallback_url(game.get("appid"))
-            return idx, url
-
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(fetch_image, item): item for item in games_to_fetch}
-            for future in as_completed(futures):
-                try:
-                    idx, url = future.result()
-                    if url:
-                        games[idx]["image"] = url
-                except Exception:
-                    pass
-
-        return games
-
-    def get_steamgriddb_platform(self, source: str, category: str) -> str:
-        platform_map = {
-            "steam": "steam", "epic": "egs", "gog": "gog",
-            "amazon": "amazon", "uplay": "uplay", "origin": "origin",
-            "battlenet": "bnet", "sideload": "steam",
-        }
-        return platform_map.get(source.lower()) or platform_map.get(category.lower()) or "steam"
-
-    def _search_sgdb_id_by_name(self, game_name: str, api_key: str, timeout: int) -> Optional[int]:
-        """Cherche un jeu sur SGDB par nom. Retourne l'ID SGDB si le nom correspond bien."""
-        import urllib.parse
-
-        def word_set(name):
-            # Enlever ™, ®, ©, ponctuation spéciale avant de split
-            cleaned = re.sub(r'[™®©]', '', name)
-            return set(re.sub(r'[_\-:]+', ' ', cleaned).lower().split())
-
-        game_words = word_set(game_name)
-        if not game_words:
-            return None
-
-        encoded = urllib.parse.quote(game_name)
-        url = f"https://www.steamgriddb.com/api/v2/search/autocomplete/{encoded}"
-        try:
-            req = urllib.request.Request(url)
-            req.add_header("Authorization", f"Bearer {api_key}")
-            req.add_header("User-Agent", "QuickShell-GameLauncher/2.0")
-            req.add_header("Accept", "application/json")
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                data = json.loads(resp.read().decode())
-                if data.get("success") and data.get("data"):
-                    for result in data["data"]:
-                        sgdb_words = word_set(result.get("name", ""))
-                        # Tous les mots du nom de jeu doivent être dans le résultat SGDB
-                        # Évite les faux positifs comme "Elden Ring_Mod" → "Elden Ring"
-                        if game_words and game_words.issubset(sgdb_words):
-                            return result["id"]
-        except Exception:
-            pass
-        return None
 
     def get_steam_cover_url(self, app_id: str) -> str:
-        sgdb_url = self.get_steamgriddb_cover_url(app_id, platform="steam")
+        sgdb_url = self.sgdb.get_cover_url(app_id, platform="steam")
         if sgdb_url:
             return sgdb_url
         sgdb_config = self.config.get("steamgriddb", {})
@@ -554,8 +325,8 @@ class GameLauncher:
         return self.get_steam_cdn_fallback_url(app_id)
 
     def get_heroic_cover_url(self, app_id: str, source: str, art_url: str = "", game_name: str = "") -> str:
-        platform = self.get_steamgriddb_platform(source, source)
-        sgdb_url = self.get_steamgriddb_cover_url(app_id, platform=platform, game_name=game_name)
+        platform = self.sgdb.get_platform(source, source)
+        sgdb_url = self.sgdb.get_cover_url(app_id, platform=platform, game_name=game_name)
         return sgdb_url if sgdb_url else art_url
 
     # ── Steam ──────────────────────────────────────────────────────────────
@@ -628,7 +399,7 @@ class GameLauncher:
         bin_appid = int32.pack(appid)
         hex_appid = binascii.hexlify(bin_appid).decode()
         reversed_hex = bytes.fromhex(hex_appid)[::-1].hex()
-        return int(reversed_hex, 16) << 32 | 0x02000000
+        return int(reversed_hex, _HEX_BASE) << _APPID_UPPER_SHIFT | _STEAM_SHORTCUT_FLAG
 
     def parse_vdf_shortcuts(self, file_path: Path) -> List[Dict[str, Any]]:
         games = []
@@ -817,7 +588,7 @@ class GameLauncher:
                             "logo":        ""
                         })
                 except Exception:
-                    pass
+                    pass  # fichier Heroic illisible : bibliothèque ignorée
 
             if scan_sideload:
                 sideload_path = heroic_path / "sideload_apps" / "library.json"
@@ -844,7 +615,65 @@ class GameLauncher:
                                     "logo":        ""
                                 })
                     except Exception:
-                        pass
+                        pass  # fichier sideload illisible : ignoré
+
+        return games
+
+    # ── Lutris ─────────────────────────────────────────────────────────────
+
+    def scan_lutris_library(self) -> List[Dict[str, Any]]:
+        games = []
+        if not self.config.get("lutris", {}).get("enabled", False):
+            return games
+
+        db_path = self.expand_path(
+            self.config.get("lutris", {}).get("db_path", "~/.local/share/lutris/pga.db")
+        )
+        if not db_path.exists():
+            return games
+
+        coverart_dir = self.expand_path("~/.local/share/lutris/coverart")
+        try:
+            con = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+            con.row_factory = sqlite3.Row
+            cur = con.cursor()
+            cur.execute(
+                "SELECT id, name, slug, runner, lastplayed, installed "
+                "FROM games WHERE installed = 1"
+            )
+            rows = cur.fetchall()
+            con.close()
+        except Exception as e:
+            print(f"[lutris] Error reading database: {e}", file=sys.stderr)
+            return games
+
+        for row in rows:
+            name = row["name"] or ""
+            if not name:
+                continue
+
+            slug = row["slug"] or ""
+            game_id = row["id"]
+
+            # Cover art: check jpg then png
+            image_path = ""
+            for ext in ("jpg", "jpeg", "png"):
+                candidate = coverart_dir / f"{slug}.{ext}"
+                if candidate.exists():
+                    image_path = str(candidate)
+                    break
+
+            games.append({
+                "name":        name,
+                "exec":        self.get_lutris_exec(game_id),
+                "image":       image_path,
+                "category":    "lutris",
+                "favorite":    False,
+                "source":      "lutris",
+                "last_played": row["lastplayed"] or 0,
+                "appid":       str(game_id),
+                "logo":        "",
+            })
 
         return games
 
@@ -924,11 +753,57 @@ class GameLauncher:
             return False
         return True
 
+    # Source priority for exec/launch command (higher = preferred)
+    _SOURCE_PRIORITY = {"steam": 4, "epic": 3, "gog": 3, "amazon": 3, "heroic": 3, "lutris": 2, "desktop": 1, "manual": 5}
+
+    def _metadata_score(self, game: Dict[str, Any]) -> int:
+        score = 0
+        if game.get("image"):
+            score += 3
+        if game.get("last_played", 0) > 0:
+            score += 2
+        if game.get("appid"):
+            score += 1
+        if game.get("logo"):
+            score += 1
+        return score
+
+    def _deduplicate_games(self, games: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Group games by normalized name, merge duplicates keeping best metadata."""
+        groups: Dict[str, List[Dict[str, Any]]] = {}
+        for game in games:
+            key = game.get("name", "").strip().lower()
+            groups.setdefault(key, []).append(game)
+
+        result = []
+        for entries in groups.values():
+            if len(entries) == 1:
+                result.append(entries[0])
+                continue
+
+            # Sort by source priority desc, then metadata score desc
+            entries.sort(key=lambda g: (
+                self._SOURCE_PRIORITY.get(g.get("source", ""), 0),
+                self._metadata_score(g)
+            ), reverse=True)
+
+            # Start from the highest-priority entry and fill gaps from others
+            merged = dict(entries[0])
+            for other in entries[1:]:
+                for field in ("image", "logo", "last_played", "appid"):
+                    if not merged.get(field) and other.get(field):
+                        merged[field] = other[field]
+
+            result.append(merged)
+
+        return result
+
     def merge_games(self) -> List[Dict[str, Any]]:
         steam_games     = self.scan_steam_library()
         steam_shortcuts = self.scan_steam_shortcuts()
         desktop_games   = self.scan_desktop_files()
         heroic_games    = self.scan_heroic_library()
+        lutris_games    = self.scan_lutris_library()
         manual_games    = self.load_manual_games()
         config_entries  = self.load_config_entries()
 
@@ -936,36 +811,38 @@ class GameLauncher:
 
         for game in steam_games:
             if self.should_include_game(game):
-                games_dict[game["name"]] = game
+                games_dict[f"steam:{game['name']}"] = game
         for game in steam_shortcuts:
             if self.should_include_game(game):
-                if game["name"] in games_dict:
-                    games_dict[game["name"]].update(game)
+                key = f"steam:{game['name']}"
+                if key in games_dict:
+                    games_dict[key].update(game)
                 else:
-                    games_dict[game["name"]] = game
+                    games_dict[key] = game
         for game in heroic_games:
             if self.should_include_game(game):
-                if game["name"] in games_dict:
-                    games_dict[game["name"]].update(game)
-                else:
-                    games_dict[game["name"]] = game
+                games_dict[f"heroic:{game['name']}"] = game
+        for game in lutris_games:
+            if self.should_include_game(game):
+                games_dict[f"lutris:{game['name']}"] = game
         for game in config_entries:
             if self.should_include_game(game):
-                if game["name"] in games_dict:
-                    games_dict[game["name"]].update(game)
-                else:
-                    games_dict[game["name"]] = game
+                games_dict[f"config:{game['name']}"] = game
         for game in desktop_games:
             if self.should_include_game(game):
-                if game["name"] not in games_dict:
-                    games_dict[game["name"]] = game
+                key = f"desktop:{game['name']}"
+                if key not in games_dict:
+                    games_dict[key] = game
         for game in manual_games:
-            if game["name"] in games_dict:
-                games_dict[game["name"]].update(game)
+            # Manual entries override by name across all sources
+            matched = [k for k in games_dict if k.endswith(f":{game['name']}")]
+            if matched:
+                for k in matched:
+                    games_dict[k].update(game)
             else:
-                games_dict[game["name"]] = game
+                games_dict[f"manual:{game['name']}"] = game
 
-        games = list(games_dict.values())
+        games = self._deduplicate_games(list(games_dict.values()))
 
         sgdb_config = self.config.get("steamgriddb", {})
         if sgdb_config.get("enabled", False) and sgdb_config.get("parallel_requests", True):
