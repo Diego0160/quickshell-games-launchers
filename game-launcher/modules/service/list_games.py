@@ -1,28 +1,13 @@
 #!/usr/bin/env python3
-import re
+"""
+Game Library List Generator
+Lists all detected games with their installation paths and sources
+"""
+
+import json
+import sys
+from pathlib import Path
 from backend import GameLauncher
-
-_LINE_WIDTH   = 80
-_TITLE_INDENT = 25
-
-
-def _find_steam_install_path(launcher: GameLauncher, app_id: str) -> str:
-    """Retourne le chemin d'installation Steam d'un jeu, ou chaîne vide."""
-    for lib_path_str in launcher.config.get("steam", {}).get("library_paths", []):
-        lib_path = launcher.expand_path(lib_path_str)
-        if not lib_path.exists():
-            continue
-        for acf_file in lib_path.glob("appmanifest_*.acf"):
-            try:
-                content = acf_file.read_text(encoding="utf-8", errors="ignore")
-                if not re.search(r'"appid"\s+"' + app_id + r'"', content):
-                    continue
-                install_match = re.search(r'"installdir"\s+"([^"]+)"', content)
-                if install_match:
-                    return str(lib_path.parent / "common" / install_match.group(1))
-            except Exception:
-                pass  # fichier ACF illisible : ignoré
-    return ""
 
 
 def main():
@@ -34,9 +19,9 @@ def main():
     # Sort games by source then name
     games.sort(key=lambda g: (g.get("source", ""), g.get("name", "").lower()))
 
-    print("=" * _LINE_WIDTH)
-    print(" " * _TITLE_INDENT + "GAME LIBRARY")
-    print("=" * _LINE_WIDTH)
+    print("=" * 80)
+    print(" " * 25 + "GAME LIBRARY")
+    print("=" * 80)
     print(f"\nTotal games found: {len(games)}\n")
 
     current_source = None
@@ -59,9 +44,9 @@ def main():
                 "config": "CUSTOM LAUNCHERS",
                 "manual": "MANUAL ENTRIES"
             }
-            print("\n" + "-" * _LINE_WIDTH)
+            print("\n" + "-" * 80)
             print(f"  {source_names.get(source, source.upper())}")
-            print("-" * _LINE_WIDTH + "\n")
+            print("-" * 80 + "\n")
 
         # Print game info
         print(f"📦 {name}")
@@ -73,9 +58,31 @@ def main():
         if "steam://rungameid/" in exec_cmd:
             app_id = exec_cmd.split("steam://rungameid/")[1].split()[0]
             print(f"   App ID:   {app_id}")
-            install_path = _find_steam_install_path(launcher, app_id)
-            if install_path:
-                print(f"   Path:     {install_path}")
+            # Try to find install path from Steam library
+            import re
+            found_path = False
+            for lib_path_str in launcher.config.get("steam", {}).get("library_paths", []):
+                lib_path = launcher.expand_path(lib_path_str)
+                if lib_path.exists():
+                    for acf_file in lib_path.glob("appmanifest_*.acf"):
+                        try:
+                            with open(acf_file, 'r', encoding='utf-8', errors='ignore') as f:
+                                content = f.read()
+                                # Check if this ACF file is for our app_id
+                                appid_match = re.search(r'"appid"\s+"' + app_id + r'"', content)
+                                if appid_match:
+                                    # Extract install directory
+                                    install_match = re.search(r'"installdir"\s+"([^"]+)"', content)
+                                    if install_match:
+                                        install_dir = install_match.group(1)
+                                        full_path = lib_path.parent / "common" / install_dir
+                                        print(f"   Path:     {full_path}")
+                                        found_path = True
+                                        break
+                        except Exception as e:
+                            pass
+                    if found_path:
+                        break
 
         elif source == "heroic" and "heroic://launch/" in exec_cmd:
             parts = exec_cmd.replace("heroic://launch/", "").split("/")
@@ -91,7 +98,7 @@ def main():
 
         print()
 
-    print("=" * _LINE_WIDTH)
+    print("=" * 80)
     print("\nPress ENTER to close...")
     input()
 
