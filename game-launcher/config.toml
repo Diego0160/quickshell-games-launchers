@@ -114,6 +114,6 @@ ease_type = "OutCubic"
 box_art_dir = "~/.config/quickshell/game-launcher/box-art"
 
 [[entries]]
-title = "📚 Game Library"
-launch_command = "kitty -e python3 /home/florian/.config/quickshell/game-launcher/modules/service/list_games.py"
+title = "Game Library"
+launch_command = "~/.config/quickshell/game-launcher/modules/service/run_in_terminal.sh python3 ~/.config/quickshell/game-launcher/modules/service/list_games.py"
 path_box_art = "library.png"
