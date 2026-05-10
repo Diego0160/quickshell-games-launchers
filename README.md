@@ -41,11 +41,11 @@ Game launcher with multi-platform support and a sleek animated interface.
 
 ## 🎮 Gamepad
 
-| Bouton | Action |
+| Button | Action |
 |--------|--------|
-| ![](https://img.shields.io/badge/D--pad-grey?style=flat-square) | Naviguer dans la grille |
-| ![](https://img.shields.io/badge/A-1d7b36?style=flat-square&logo=xbox&logoColor=white) | Lancer le jeu sélectionné |
-| ![](https://img.shields.io/badge/B-c0392b?style=flat-square&logo=xbox&logoColor=white) | Fermer |
+| ![](https://img.shields.io/badge/D--pad-grey?style=flat-square) | Navigate the grid |
+| ![](https://img.shields.io/badge/A-1d7b36?style=flat-square&logo=xbox&logoColor=white) | Launch selected game |
+| ![](https://img.shields.io/badge/B-c0392b?style=flat-square&logo=xbox&logoColor=white) | Close |
 
 ## 🛠️ Installation
 
@@ -79,14 +79,14 @@ yay -S ttf-font-awesome-7
 ### Hyprland keybind
 
 In `~/.config/hypr/hyprland.conf`:
-Exemple:
+Example:
 ```conf
 bind = SUPER, G, exec, ~/.config/quickshell/game-launcher/toggle.sh
 ```
-Or
+<!-- Or
 ```conf
 bind = SUPER, G, exec, quickshell-game
-```
+``` -->
 
 ---
 
