@@ -27,6 +27,7 @@ Game launcher with multi-platform support and a sleek interface.
 - `Enter` : Launch game
 - `Double-click` : Launch game
 - `Esc` : Close
+- `ALT + F` : Favorite
 - `Scroll wheel` : Navigate
 
 ## 🛠️ Installation
