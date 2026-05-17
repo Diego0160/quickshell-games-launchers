@@ -23,6 +23,7 @@ Rectangle {
 
     signal clicked()
     signal launchRequested()
+    signal favoriteToggled()
 
     width: 220
     height: 300
@@ -265,22 +266,38 @@ Rectangle {
                 }
             }
 
-            // Favorite star
+            // Heart button — always visible, clickable to toggle favorite
             Rectangle {
-                visible: isFavorite
+                id: favBtn
                 width: 32
                 height: 32
                 radius: 16
-                color: gameColors.color3 || "#ffaa00"
+                color: card.isFavorite
+                    ? (gameColors.color3 || "#ffaa00")
+                    : Qt.rgba(0, 0, 0, 0.45)
                 anchors.top: parent.top
                 anchors.right: parent.right
                 anchors.margins: 8
+                opacity: card.isFavorite ? 1.0 : (favBtnMouse.containsMouse ? 0.65 : 0.3)
+
+                Behavior on opacity { NumberAnimation { duration: 150 } }
+                Behavior on color   { ColorAnimation  { duration: 200 } }
 
                 Text {
                     anchors.centerIn: parent
-                    text: "★"
-                    font.pixelSize: 20
-                    color: "#1a1a1a"
+                    text: ""
+                    font.family: "Font Awesome 7 Free Solid"
+                    font.pixelSize: 14
+                    color: card.isFavorite ? "#1a1a1a" : "#ffffff"
+                    Behavior on color { ColorAnimation { duration: 200 } }
+                }
+
+                MouseArea {
+                    id: favBtnMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: card.favoriteToggled()
                 }
             }
 
