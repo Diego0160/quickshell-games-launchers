@@ -48,18 +48,6 @@ Game launcher with multi-platform support and a sleek animated interface.
 | ![](https://img.shields.io/badge/SELECT-2c3e50?style=flat-square&logo=xbox&logoColor=white) | favorite |
 | ![](https://img.shields.io/badge/B-c0392b?style=flat-square&logo=xbox&logoColor=white) | Close |
 
-## 🛠️ Installation
-
-### Via AUR
-```bash
-yay -S quickshell-games-launchers-git
-```
-
-### From source
-```bash
-git clone https://github.com/Eaquo/Quickshell-Games.git
-cp -r Quickshell-Games/game-launcher ~/.config/quickshell/game-launcher
-```
 
 ### Prerequisites
 
@@ -72,10 +60,33 @@ pip install vdf
 
 # Quickshell
 yay -S quickshell-git
+paru -S quickshell-git
 
 # Font Awesome 7 (for icons)
 yay -S ttf-font-awesome-7
+paru -S ttf-font-awesome-7
 ```
+
+## 🛠️ Installation
+
+### Via AUR
+```bash
+paru -S quickshell-games-launchers-git
+# or
+yay -S quickshell-games-launchers-git
+```
+Run Terminal:
+```bash
+quickshell-game
+```
+
+### From source
+```bash
+git clone https://github.com/Eaquo/Quickshell-Games.git
+cp -r Quickshell-Games/game-launcher ~/.config/quickshell/game-launcher
+```
+
+
 
 ### Hyprland keybind
 
