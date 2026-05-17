@@ -73,6 +73,7 @@ class GameLauncher:
             config_path = script_dir.parent.parent / "config.toml"
 
         self.config_path = Path(config_path)
+        self.favorites_file = self.config_path.parent / "favorites.json"
         self.config = self.load_config()
 
         cache_dir = self.config_path.parent / "cache"
@@ -161,6 +162,34 @@ class GameLauncher:
         # AppImage and native binary accept the URL as argument
         # Flatpak command already contains all tokens
         return f"{self._heroic_bin} {url}"
+
+    # ── Favorites ──────────────────────────────────────────────────────────
+
+    def load_favorites(self) -> set:
+        try:
+            with open(self.favorites_file, 'r') as f:
+                return set(json.load(f))
+        except Exception:
+            return set()
+
+    def save_favorites(self, favorites: set):
+        try:
+            with open(self.favorites_file, 'w') as f:
+                json.dump(sorted(favorites), f, indent=2)
+        except Exception as e:
+            print(f"Error saving favorites: {e}", file=sys.stderr)
+
+    def toggle_favorite(self, name: str, source: str):
+        key = f"{name}:{source}"
+        favorites = self.load_favorites()
+        if key in favorites:
+            favorites.discard(key)
+            is_fav = False
+        else:
+            favorites.add(key)
+            is_fav = True
+        self.save_favorites(favorites)
+        print(json.dumps({"ok": True, "favorite": is_fav}), flush=True)
 
     # ── Config ─────────────────────────────────────────────────────────────
 
@@ -1104,6 +1133,11 @@ class GameLauncher:
         if sgdb_config.get("enabled", False) and sgdb_config.get("parallel_requests", True):
             games = self.fetch_images_parallel(games)
 
+        favorites = self.load_favorites()
+        for game in games:
+            key = f"{game.get('name', '')}:{game.get('source', '')}"
+            game['favorite'] = key in favorites
+
         return games
 
     def sort_games(self, games: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -1153,8 +1187,14 @@ class GameLauncher:
 
 
 def main():
-    launcher = GameLauncher()
-    launcher.output_json()
+    if len(sys.argv) >= 3 and sys.argv[1] == "toggle":
+        name = sys.argv[2]
+        source = sys.argv[3] if len(sys.argv) > 3 else ""
+        launcher = GameLauncher()
+        launcher.toggle_favorite(name, source)
+    else:
+        launcher = GameLauncher()
+        launcher.output_json()
 
 
 if __name__ == "__main__":
