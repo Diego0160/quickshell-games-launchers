@@ -350,89 +350,51 @@ Item {
             }
         }
 
-        // ── Stats panel (right side) ──────────────────────────────────────────
+        // ── Stats panel — dernière session ──────────────────────────────────
         Rectangle {
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.rightMargin: 40
             anchors.topMargin: 30
-            width: 220
-            height: statsCol.implicitHeight + 32
+            width: 200
+            height: statsCol.implicitHeight + 28
             radius: 14
             color: Qt.rgba(0, 0, 0, 0.62)
             border.color: Qt.rgba(1,1,1,0.1); border.width: 1
-
-            property bool hasPlaytime: (currentGame?.playtime_minutes || 0) > 0
-            property bool hasLastPlayed: (currentGame?.last_played || 0) > 0
-            visible: hasPlaytime || hasLastPlayed
+            visible: (currentGame?.last_played || 0) > 0
 
             Column {
                 id: statsCol
                 anchors.left: parent.left; anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.margins: 16
-                spacing: 18
+                anchors.margins: 14
+                spacing: 5
 
-                // ── Temps de jeu ──
-                Column {
-                    width: parent.width
-                    spacing: 4
-                    visible: (currentGame?.playtime_minutes || 0) > 0
-                    Row {
-                        spacing: 7
-                        Text {
-                            text: "\uf017"
-                            font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 11
-                            color: bp.accentRgba(0.8)
-                        }
-                        Text {
-                            text: "Temps de jeu"
-                            font.pixelSize: 11; font.family: "Open Sans Regular"
-                            color: Qt.rgba(1,1,1,0.45)
-                        }
+                Row {
+                    spacing: 7
+                    Text {
+                        text: "\uf073"
+                        font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 11
+                        color: bp.accentRgba(0.8)
+                        anchors.verticalCenter: parent.verticalCenter
                     }
                     Text {
-                        text: bp.formatPlaytime(currentGame?.playtime_minutes || 0)
-                        font.pixelSize: 22; font.bold: true; font.family: "Open Sans Regular"
-                        color: "#ffffff"
+                        text: "Derni\u00e8re session"
+                        font.pixelSize: 11; font.family: "Open Sans Regular"
+                        color: Qt.rgba(1,1,1,0.45)
+                        anchors.verticalCenter: parent.verticalCenter
                     }
                 }
-
-                // ── Séparateur (seulement si les deux sections sont visibles) ──
-                Rectangle {
-                    width: parent.width; height: 1
-                    color: Qt.rgba(1,1,1,0.1)
-                    visible: (currentGame?.playtime_minutes || 0) > 0 && (currentGame?.last_played || 0) > 0
-                }
-
-                // ── Dernière session ──
-                Column {
+                Text {
+                    text: bp.formatLastPlayed(currentGame?.last_played || 0)
+                    font.pixelSize: 15; font.bold: true; font.family: "Open Sans Regular"
+                    color: Qt.rgba(1,1,1,0.9)
+                    wrapMode: Text.WordWrap
                     width: parent.width
-                    spacing: 4
-                    visible: (currentGame?.last_played || 0) > 0
-                    Row {
-                        spacing: 7
-                        Text {
-                            text: "\uf073"
-                            font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 11
-                            color: bp.accentRgba(0.8)
-                        }
-                        Text {
-                            text: "Derni\u00e8re session"
-                            font.pixelSize: 11; font.family: "Open Sans Regular"
-                            color: Qt.rgba(1,1,1,0.45)
-                        }
-                    }
-                    Text {
-                        text: bp.formatLastPlayed(currentGame?.last_played || 0)
-                        font.pixelSize: 14; font.family: "Open Sans Regular"
-                        color: Qt.rgba(1,1,1,0.85)
-                        wrapMode: Text.WordWrap
-                        width: parent.width
-                    }
                 }
             }
         }
+
         // ── Action buttons (bottom-right) ───────────────────────────────────
         Row {
             anchors.right: parent.right
