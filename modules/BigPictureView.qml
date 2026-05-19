@@ -350,7 +350,7 @@ Item {
             }
         }
 
-        // ── Stats panel (right side) ────────────────────────────────────────
+        // ── Stats panel (right side) ──────────────────────────────────────────
         Rectangle {
             anchors.right: parent.right
             anchors.top: parent.top
@@ -361,6 +361,10 @@ Item {
             radius: 14
             color: Qt.rgba(0, 0, 0, 0.62)
             border.color: Qt.rgba(1,1,1,0.1); border.width: 1
+
+            property bool hasPlaytime: (currentGame?.playtime_minutes || 0) > 0
+            property bool hasLastPlayed: (currentGame?.last_played || 0) > 0
+            visible: hasPlaytime || hasLastPlayed
 
             Column {
                 id: statsCol
@@ -373,10 +377,11 @@ Item {
                 Column {
                     width: parent.width
                     spacing: 4
+                    visible: (currentGame?.playtime_minutes || 0) > 0
                     Row {
                         spacing: 7
                         Text {
-                            text: ""
+                            text: "\uf017"
                             font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 11
                             color: bp.accentRgba(0.8)
                         }
@@ -389,31 +394,31 @@ Item {
                     Text {
                         text: bp.formatPlaytime(currentGame?.playtime_minutes || 0)
                         font.pixelSize: 22; font.bold: true; font.family: "Open Sans Regular"
-                        color: (currentGame?.playtime_minutes || 0) > 0
-                            ? "#ffffff"
-                            : Qt.rgba(1,1,1,0.3)
+                        color: "#ffffff"
                     }
                 }
 
-                // ── Séparateur ──
+                // ── Séparateur (seulement si les deux sections sont visibles) ──
                 Rectangle {
                     width: parent.width; height: 1
                     color: Qt.rgba(1,1,1,0.1)
+                    visible: (currentGame?.playtime_minutes || 0) > 0 && (currentGame?.last_played || 0) > 0
                 }
 
                 // ── Dernière session ──
                 Column {
                     width: parent.width
                     spacing: 4
+                    visible: (currentGame?.last_played || 0) > 0
                     Row {
                         spacing: 7
                         Text {
-                            text: ""
+                            text: "\uf073"
                             font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 11
                             color: bp.accentRgba(0.8)
                         }
                         Text {
-                            text: "Dernière session"
+                            text: "Derni\u00e8re session"
                             font.pixelSize: 11; font.family: "Open Sans Regular"
                             color: Qt.rgba(1,1,1,0.45)
                         }
@@ -421,16 +426,13 @@ Item {
                     Text {
                         text: bp.formatLastPlayed(currentGame?.last_played || 0)
                         font.pixelSize: 14; font.family: "Open Sans Regular"
-                        color: (currentGame?.last_played || 0) > 0
-                            ? Qt.rgba(1,1,1,0.85)
-                            : Qt.rgba(1,1,1,0.3)
+                        color: Qt.rgba(1,1,1,0.85)
                         wrapMode: Text.WordWrap
                         width: parent.width
                     }
                 }
             }
         }
-
         // ── Action buttons (bottom-right) ───────────────────────────────────
         Row {
             anchors.right: parent.right
