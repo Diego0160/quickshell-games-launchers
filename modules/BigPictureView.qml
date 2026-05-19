@@ -68,7 +68,7 @@ Item {
     }
 
     function formatPlaytime(minutes) {
-        if (!minutes || minutes === 0) return "Jamais joué"
+        if (!minutes || minutes === 0) return ""
         const h = Math.floor(minutes / 60)
         const m = minutes % 60
         if (h > 0 && m > 0) return h + "h " + m + "min"
@@ -77,9 +77,16 @@ Item {
     }
 
     function formatLastPlayed(ts) {
-        if (!ts || ts === 0) return "—"
+        if (!ts || ts === 0) return ""
         const d = new Date(ts * 1000)
         return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+    }
+
+    function formatSize(bytes) {
+        if (!bytes || bytes === 0) return ""
+        if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(1) + " GB"
+        if (bytes >= 1048576)    return (bytes / 1048576).toFixed(0) + " MB"
+        return (bytes / 1024).toFixed(0) + " KB"
     }
 
     // ── Solid background ────────────────────────────────────────────────────
@@ -350,47 +357,129 @@ Item {
             }
         }
 
-        // ── Stats panel — dernière session ──────────────────────────────────
+        // ── Stats panel (right side) ──────────────────────────────────────────
         Rectangle {
+            id: statsPanel
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.rightMargin: 40
             anchors.topMargin: 30
-            width: 200
-            height: statsCol.implicitHeight + 28
+            width: 210
+            height: statsList.implicitHeight + 28
             radius: 14
             color: Qt.rgba(0, 0, 0, 0.62)
             border.color: Qt.rgba(1,1,1,0.1); border.width: 1
-            visible: (currentGame?.last_played || 0) > 0
+
+            property bool hasPlaytime:    (currentGame?.playtime_minutes || 0) > 0
+            property bool hasLastPlayed:  (currentGame?.last_played      || 0) > 0
+            property bool hasSize:        (currentGame?.size_bytes        || 0) > 0
+            property bool hasLastUpdated: (currentGame?.last_updated      || 0) > 0
+            visible: hasPlaytime || hasLastPlayed || hasSize || hasLastUpdated
 
             Column {
-                id: statsCol
+                id: statsList
                 anchors.left: parent.left; anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.margins: 14
-                spacing: 5
+                spacing: 0
 
-                Row {
-                    spacing: 7
-                    Text {
-                        text: "\uf073"
-                        font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 11
-                        color: bp.accentRgba(0.8)
-                        anchors.verticalCenter: parent.verticalCenter
+                // ── Temps de jeu ──
+                Column {
+                    width: parent.width
+                    spacing: 3
+                    visible: statsPanel.hasPlaytime
+                    topPadding: 0
+                    bottomPadding: statsPanel.hasLastPlayed || statsPanel.hasSize || statsPanel.hasLastUpdated ? 14 : 0
+                    Row {
+                        spacing: 6
+                        Text { text: ""; font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 10
+                               color: bp.accentRgba(0.85); anchors.verticalCenter: parent.verticalCenter }
+                        Text { text: "Temps de jeu"; font.pixelSize: 10; font.family: "Open Sans Regular"
+                               color: Qt.rgba(1,1,1,0.4); anchors.verticalCenter: parent.verticalCenter }
                     }
                     Text {
-                        text: "Derni\u00e8re session"
-                        font.pixelSize: 11; font.family: "Open Sans Regular"
-                        color: Qt.rgba(1,1,1,0.45)
-                        anchors.verticalCenter: parent.verticalCenter
+                        text: bp.formatPlaytime(currentGame?.playtime_minutes || 0)
+                        font.pixelSize: 20; font.bold: true; font.family: "Open Sans Regular"
+                        color: "#ffffff"
                     }
                 }
-                Text {
-                    text: bp.formatLastPlayed(currentGame?.last_played || 0)
-                    font.pixelSize: 15; font.bold: true; font.family: "Open Sans Regular"
-                    color: Qt.rgba(1,1,1,0.9)
-                    wrapMode: Text.WordWrap
+
+                Rectangle {
+                    width: parent.width; height: 1; color: Qt.rgba(1,1,1,0.1)
+                    visible: statsPanel.hasPlaytime && (statsPanel.hasLastPlayed || statsPanel.hasSize || statsPanel.hasLastUpdated)
+                }
+
+                // ── Dernière session ──
+                Column {
                     width: parent.width
+                    spacing: 3
+                    visible: statsPanel.hasLastPlayed
+                    topPadding: statsPanel.hasPlaytime ? 14 : 0
+                    bottomPadding: statsPanel.hasSize || statsPanel.hasLastUpdated ? 14 : 0
+                    Row {
+                        spacing: 6
+                        Text { text: ""; font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 10
+                               color: bp.accentRgba(0.85); anchors.verticalCenter: parent.verticalCenter }
+                        Text { text: "Dernière session"; font.pixelSize: 10; font.family: "Open Sans Regular"
+                               color: Qt.rgba(1,1,1,0.4); anchors.verticalCenter: parent.verticalCenter }
+                    }
+                    Text {
+                        text: bp.formatLastPlayed(currentGame?.last_played || 0)
+                        font.pixelSize: 13; font.bold: true; font.family: "Open Sans Regular"
+                        color: Qt.rgba(1,1,1,0.9); wrapMode: Text.WordWrap; width: parent.width
+                    }
+                }
+
+                Rectangle {
+                    width: parent.width; height: 1; color: Qt.rgba(1,1,1,0.1)
+                    visible: statsPanel.hasLastPlayed && (statsPanel.hasSize || statsPanel.hasLastUpdated)
+                }
+
+                // ── Taille installée ──
+                Column {
+                    width: parent.width
+                    spacing: 3
+                    visible: statsPanel.hasSize
+                    topPadding: (statsPanel.hasPlaytime || statsPanel.hasLastPlayed) ? 14 : 0
+                    bottomPadding: statsPanel.hasLastUpdated ? 14 : 0
+                    Row {
+                        spacing: 6
+                        Text { text: ""; font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 10
+                               color: bp.accentRgba(0.85); anchors.verticalCenter: parent.verticalCenter }
+                        Text { text: "Taille installée"; font.pixelSize: 10; font.family: "Open Sans Regular"
+                               color: Qt.rgba(1,1,1,0.4); anchors.verticalCenter: parent.verticalCenter }
+                    }
+                    Text {
+                        text: bp.formatSize(currentGame?.size_bytes || 0)
+                        font.pixelSize: 16; font.bold: true; font.family: "Open Sans Regular"
+                        color: "#ffffff"
+                    }
+                }
+
+                Rectangle {
+                    width: parent.width; height: 1; color: Qt.rgba(1,1,1,0.1)
+                    visible: statsPanel.hasSize && statsPanel.hasLastUpdated
+                }
+
+                // ── Dernière mise à jour ──
+                Column {
+                    width: parent.width
+                    spacing: 3
+                    visible: statsPanel.hasLastUpdated
+                    topPadding: (statsPanel.hasPlaytime || statsPanel.hasLastPlayed || statsPanel.hasSize) ? 14 : 0
+                    bottomPadding: 0
+                    Row {
+                        spacing: 6
+                        Text { text: ""; font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 10
+                               color: bp.accentRgba(0.85); anchors.verticalCenter: parent.verticalCenter }
+                        Text { text: "Dernière MAJ"; font.pixelSize: 10; font.family: "Open Sans Regular"
+                               color: Qt.rgba(1,1,1,0.4); anchors.verticalCenter: parent.verticalCenter }
+                    }
+                    Text {
+                        text: bp.formatLastPlayed(currentGame?.last_updated || 0)
+                        font.pixelSize: 13; font.bold: true; font.family: "Open Sans Regular"
+                        color: Qt.rgba(1,1,1,0.9); wrapMode: Text.WordWrap; width: parent.width
+                    }
                 }
             }
         }

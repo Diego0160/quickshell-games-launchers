@@ -616,10 +616,51 @@ class GameLauncher:
 
     # ── Steam ──────────────────────────────────────────────────────────────
 
+    def load_steam_playtime(self) -> Dict[str, int]:
+        """Parse localconfig.vdf to get Playtime (minutes) per appid."""
+        result = {}
+        userdata = Path.home() / ".local/share/Steam/userdata"
+        if not userdata.exists():
+            return result
+        for user_dir in userdata.iterdir():
+            cfg = user_dir / "config" / "localconfig.vdf"
+            if not cfg.exists():
+                continue
+            try:
+                content = cfg.read_text(encoding="utf-8", errors="ignore")
+                apps_match = re.search(r'"apps"\s*\{', content)
+                if not apps_match:
+                    continue
+                apps_content = content[apps_match.end():]
+                pos = 0
+                while pos < len(apps_content):
+                    m = re.search(r'"(\d{4,10})"\s*\{', apps_content[pos:])
+                    if not m:
+                        break
+                    appid = m.group(1)
+                    block_start = pos + m.end()
+                    depth = 1
+                    p = block_start
+                    while p < len(apps_content) and depth > 0:
+                        if apps_content[p] == '{':
+                            depth += 1
+                        elif apps_content[p] == '}':
+                            depth -= 1
+                        p += 1
+                    block = apps_content[block_start:p - 1]
+                    pt = re.search(r'"Playtime"\s+"(\d+)"', block)
+                    if pt:
+                        result[appid] = int(pt.group(1))
+                    pos = pos + m.start() + 1
+            except Exception:
+                pass
+        return result
+
     def scan_steam_library(self) -> List[Dict[str, Any]]:
         games = []
         if not self.config.get("steam", {}).get("enabled", True):
             return games
+        playtime_map = self.load_steam_playtime()
         library_paths = self.config.get("steam", {}).get("library_paths", [])
         for lib_path in library_paths:
             lib_path = self.expand_path(lib_path)
@@ -628,6 +669,8 @@ class GameLauncher:
             for acf_file in lib_path.glob("*.acf"):
                 game_data = self.parse_acf_file(acf_file)
                 if game_data:
+                    appid = game_data.get("appid", "")
+                    game_data["playtime_minutes"] = playtime_map.get(appid, 0)
                     games.append(game_data)
         return games
 
@@ -662,8 +705,11 @@ class GameLauncher:
             last_played_match = re.search(r'"LastPlayed"\s+"(\d+)"', content)
             last_played = int(last_played_match.group(1)) if last_played_match else 0
 
-            playtime_match = re.search(r'"playtime_forever"\s+"(\d+)"', content)
-            playtime_minutes = int(playtime_match.group(1)) if playtime_match else 0
+            size_match = re.search(r'"SizeOnDisk"\s+"(\d+)"', content)
+            size_bytes = int(size_match.group(1)) if size_match else 0
+
+            updated_match = re.search(r'"LastUpdated"\s+"(\d+)"', content)
+            last_updated = int(updated_match.group(1)) if updated_match else 0
 
             sgdb_config = self.config.get("steamgriddb", {})
             cover_url = "" if sgdb_config.get("parallel_requests", True) else self.get_steam_cover_url(app_id)
@@ -676,7 +722,9 @@ class GameLauncher:
                 "favorite": False,
                 "appid": app_id,
                 "last_played": last_played,
-                "playtime_minutes": playtime_minutes,
+                "playtime_minutes": 0,  # filled by scan_steam_library from localconfig.vdf
+                "size_bytes": size_bytes,
+                "last_updated": last_updated,
                 "source": "steam",
                 "logo": ""
             }
