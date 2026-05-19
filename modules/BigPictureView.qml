@@ -78,9 +78,7 @@ Item {
     }
 
     function formatLastPlayed(ts) {
-        if (!ts || ts === 0) return ""
-        const d = new Date(ts * 1000)
-        return d.toLocaleDateString(Qt.locale(), Locale.LongFormat)
+        return i18n.formatDate(ts)
     }
 
     function formatSize(bytes) {
@@ -350,7 +348,7 @@ Item {
                     text: {
                         if (!currentGame || !currentGame.last_played) return ""
                         const d = new Date(currentGame.last_played * 1000)
-                        return i18n.t("played_on") + " " + d.toLocaleDateString(Qt.locale(), Locale.LongFormat)
+                        return i18n.t("played_on") + " " + i18n.formatDate(currentGame?.last_played || 0)
                     }
                     font.pixelSize: 13; font.family: "Open Sans Regular"
                     color: Qt.rgba(1,1,1,0.55)

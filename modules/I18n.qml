@@ -8,9 +8,19 @@ QtObject {
         return strings[l] !== undefined ? l : "en"
     }
 
+    readonly property string dateLocale: ({
+        "fr": "fr-FR", "en": "en-US", "es": "es-ES", "ru": "ru-RU", "ja": "ja-JP"
+    })[lang] || "en-US"
+
     function t(key) {
         const s = strings[lang] ?? strings["en"]
         return s[key] ?? strings["en"][key] ?? key
+    }
+
+    function formatDate(ts) {
+        if (!ts || ts === 0) return ""
+        const d = new Date(ts * 1000)
+        return d.toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long", year: "numeric" })
     }
 
     readonly property var strings: ({
