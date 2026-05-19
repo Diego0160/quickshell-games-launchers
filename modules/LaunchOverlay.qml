@@ -7,6 +7,7 @@ import Quickshell
 
 Item {
     id: root
+    I18n { id: i18n }
 
     // ─── Propriétés publiques ─────────────────────────────────────
     property string coverSource: ""
@@ -197,7 +198,7 @@ Item {
             Text {
                 id: startText
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "Start Game" + dotsStr
+                text: i18n.t("start_game") + dotsStr
                 color: Qt.rgba(1, 1, 1, 0.70)
                 font.pixelSize: 20
                 font.letterSpacing: 4

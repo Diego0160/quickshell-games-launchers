@@ -5,6 +5,7 @@ import QtMultimedia
 
 Item {
     id: bp
+    I18n { id: i18n }
 
     required property var filteredGames
     required property var colors
@@ -79,7 +80,7 @@ Item {
     function formatLastPlayed(ts) {
         if (!ts || ts === 0) return ""
         const d = new Date(ts * 1000)
-        return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+        return d.toLocaleDateString(Qt.locale(), Locale.LongFormat)
     }
 
     function formatSize(bytes) {
@@ -137,7 +138,7 @@ Item {
                 Text {
                     id: allTxt
                     anchors.centerIn: parent
-                    text: "All"
+                    text: i18n.t("all")
                     font.pixelSize: 13; font.bold: bp.selectedSource === "all"; font.family: "Open Sans Regular"
                     color: bp.selectedSource === "all" ? (colors.color5 || "#73ff00") : Qt.rgba(1,1,1,0.7)
                     Behavior on color { ColorAnimation { duration: 150 } }
@@ -156,7 +157,7 @@ Item {
                 Row { id: favRow; anchors.centerIn: parent; spacing: 6
                     Text { text: ""; font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 11
                         color: bp.selectedSource === "favorites" ? (colors.color5 || "#73ff00") : Qt.rgba(1,1,1,0.7) }
-                    Text { text: "Favs"; font.pixelSize: 13; font.bold: bp.selectedSource === "favorites"; font.family: "Open Sans Regular"
+                    Text { text: i18n.t("favs"); font.pixelSize: 13; font.bold: bp.selectedSource === "favorites"; font.family: "Open Sans Regular"
                         color: bp.selectedSource === "favorites" ? (colors.color5 || "#73ff00") : Qt.rgba(1,1,1,0.7) }
                 }
                 MouseArea { id: favM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: bp.sourceSelected("favorites") }
@@ -194,7 +195,7 @@ Item {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: bp.filteredGames.length + " jeux"
+                text: bp.filteredGames.length + " " + i18n.t("games")
                 font.pixelSize: 12; font.family: "Open Sans Regular"
                 color: Qt.rgba(1,1,1,0.4)
             }
@@ -349,7 +350,7 @@ Item {
                     text: {
                         if (!currentGame || !currentGame.last_played) return ""
                         const d = new Date(currentGame.last_played * 1000)
-                        return "Joué le " + d.toLocaleDateString()
+                        return i18n.t("played_on") + " " + d.toLocaleDateString(Qt.locale(), Locale.LongFormat)
                     }
                     font.pixelSize: 13; font.family: "Open Sans Regular"
                     color: Qt.rgba(1,1,1,0.55)
@@ -394,7 +395,7 @@ Item {
                         spacing: 6
                         Text { text: ""; font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 10
                                color: bp.accentRgba(0.85); anchors.verticalCenter: parent.verticalCenter }
-                        Text { text: "Temps de jeu"; font.pixelSize: 10; font.family: "Open Sans Regular"
+                        Text { text: i18n.t("playtime"); font.pixelSize: 10; font.family: "Open Sans Regular"
                                color: Qt.rgba(1,1,1,0.4); anchors.verticalCenter: parent.verticalCenter }
                     }
                     Text {
@@ -420,7 +421,7 @@ Item {
                         spacing: 6
                         Text { text: ""; font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 10
                                color: bp.accentRgba(0.85); anchors.verticalCenter: parent.verticalCenter }
-                        Text { text: "Dernière session"; font.pixelSize: 10; font.family: "Open Sans Regular"
+                        Text { text: i18n.t("last_session"); font.pixelSize: 10; font.family: "Open Sans Regular"
                                color: Qt.rgba(1,1,1,0.4); anchors.verticalCenter: parent.verticalCenter }
                     }
                     Text {
@@ -446,7 +447,7 @@ Item {
                         spacing: 6
                         Text { text: ""; font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 10
                                color: bp.accentRgba(0.85); anchors.verticalCenter: parent.verticalCenter }
-                        Text { text: "Taille installée"; font.pixelSize: 10; font.family: "Open Sans Regular"
+                        Text { text: i18n.t("install_size"); font.pixelSize: 10; font.family: "Open Sans Regular"
                                color: Qt.rgba(1,1,1,0.4); anchors.verticalCenter: parent.verticalCenter }
                     }
                     Text {
@@ -472,7 +473,7 @@ Item {
                         spacing: 6
                         Text { text: ""; font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 10
                                color: bp.accentRgba(0.85); anchors.verticalCenter: parent.verticalCenter }
-                        Text { text: "Dernière MAJ"; font.pixelSize: 10; font.family: "Open Sans Regular"
+                        Text { text: i18n.t("last_update"); font.pixelSize: 10; font.family: "Open Sans Regular"
                                color: Qt.rgba(1,1,1,0.4); anchors.verticalCenter: parent.verticalCenter }
                     }
                     Text {
@@ -533,7 +534,7 @@ Item {
                     }
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "LANCER"
+                        text: i18n.t("launch")
                         font.pixelSize: 15; font.bold: true; font.family: "Open Sans Regular"
                         color: "#0d0d0d"
                     }
@@ -748,7 +749,7 @@ Item {
             Text {
                 id: bpStartText
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "Start Game" + bpDotsStr
+                text: i18n.t("start_game") + bpDotsStr
                 color: Qt.rgba(1,1,1,0.6)
                 font.pixelSize: 18; font.letterSpacing: 4; font.family: "Open Sans Regular"
                 horizontalAlignment: Text.AlignHCenter

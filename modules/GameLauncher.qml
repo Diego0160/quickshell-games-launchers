@@ -7,6 +7,7 @@ import Quickshell.Io
 
 Rectangle {
     id: launcher
+    I18n { id: i18n }
 
     required property var config
     property var gamesData: []
@@ -393,7 +394,7 @@ Rectangle {
                         }
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: "All"
+                            text: i18n.t("all")
                             font.pixelSize: 9
                             font.bold: selectedSource === "all"
                             font.family: "Open Sans Regular"
@@ -460,7 +461,7 @@ Rectangle {
                         }
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: "Favs"
+                            text: i18n.t("favs")
                             font.pixelSize: 9
                             font.bold: launcher.selectedSource === "favorites"
                             font.family: "Open Sans Regular"
@@ -627,7 +628,7 @@ Rectangle {
                     anchors.right: clearBtn.left; anchors.rightMargin: 4
                     anchors.verticalCenter: parent.verticalCenter
                     height: parent.height - 4
-                    placeholderText: "Search for a game…"
+                    placeholderText: i18n.t("search")
                     placeholderTextColor: Qt.rgba(1,1,1,0.3)
                     color: colors.foreground || "#ffffff"
                     font.pixelSize: 14
@@ -745,8 +746,8 @@ Rectangle {
                         Column {
                             anchors.centerIn: parent; spacing: 16
                             Text { anchors.horizontalCenter: parent.horizontalCenter; text: "🎮"; font.pixelSize: 64; opacity: 0.3 }
-                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: "Aucun jeu trouvé"; font.pixelSize: 18; color: colors.foreground||"#ffffff"; opacity: 0.7 }
-                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: launcher.searchText !== "" ? "Essaie un autre terme" : "Aucun jeu dans cette source"; font.pixelSize: 14; color: colors.foreground||"#ffffff"; opacity: 0.5 }
+                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: i18n.t("no_games"); font.pixelSize: 18; color: colors.foreground||"#ffffff"; opacity: 0.7 }
+                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: launcher.searchText !== "" ? i18n.t("try_other") : i18n.t("no_games_source"); font.pixelSize: 14; color: colors.foreground||"#ffffff"; opacity: 0.5 }
                         }
                     }
                 }
@@ -769,7 +770,7 @@ Rectangle {
                         }
                     }
                     Text { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; text: filteredGames.length > 0 ? (selectedIndex + 1) + " / " + filteredGames.length : "0"; font.pixelSize: 12; color: colors.foreground||"#ffffff"; opacity: 0.6 }
-                    Text { anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; text: "← → Navigate | ⏎ Launch | 'ALT+F' Favorite | Esc Close"; font.pixelSize: 11; color: colors.foreground||'#15ff00'; opacity: 0.5 }
+                    Text { anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; text: i18n.t("help_horiz"); font.pixelSize: 11; color: colors.foreground||'#15ff00'; opacity: 0.5 }
                 }
             }
 
