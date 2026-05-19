@@ -662,6 +662,9 @@ class GameLauncher:
             last_played_match = re.search(r'"LastPlayed"\s+"(\d+)"', content)
             last_played = int(last_played_match.group(1)) if last_played_match else 0
 
+            playtime_match = re.search(r'"playtime_forever"\s+"(\d+)"', content)
+            playtime_minutes = int(playtime_match.group(1)) if playtime_match else 0
+
             sgdb_config = self.config.get("steamgriddb", {})
             cover_url = "" if sgdb_config.get("parallel_requests", True) else self.get_steam_cover_url(app_id)
 
@@ -673,6 +676,7 @@ class GameLauncher:
                 "favorite": False,
                 "appid": app_id,
                 "last_played": last_played,
+                "playtime_minutes": playtime_minutes,
                 "source": "steam",
                 "logo": ""
             }

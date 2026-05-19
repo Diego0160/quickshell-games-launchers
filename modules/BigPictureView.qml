@@ -19,6 +19,10 @@ Item {
     signal sourceSelected(string src)
     signal indexChanged(int idx)
 
+    function showLaunch(logo, name) {
+        bpLaunchOverlay.showLaunch(logo, name)
+    }
+
     property var currentGame: filteredGames.length > 0 ? filteredGames[selectedIndex] : null
 
     focus: true
@@ -61,6 +65,21 @@ Item {
             parseInt((colors.color5 || "#73ff00").slice(3,5), 16) / 255,
             parseInt((colors.color5 || "#73ff00").slice(5,7), 16) / 255,
             a)
+    }
+
+    function formatPlaytime(minutes) {
+        if (!minutes || minutes === 0) return "Jamais joué"
+        const h = Math.floor(minutes / 60)
+        const m = minutes % 60
+        if (h > 0 && m > 0) return h + "h " + m + "min"
+        if (h > 0) return h + "h"
+        return m + "min"
+    }
+
+    function formatLastPlayed(ts) {
+        if (!ts || ts === 0) return "—"
+        const d = new Date(ts * 1000)
+        return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
     }
 
     // ── Solid background ────────────────────────────────────────────────────
@@ -331,6 +350,87 @@ Item {
             }
         }
 
+        // ── Stats panel (right side) ────────────────────────────────────────
+        Rectangle {
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.rightMargin: 40
+            anchors.topMargin: 30
+            width: 220
+            height: statsCol.implicitHeight + 32
+            radius: 14
+            color: Qt.rgba(0, 0, 0, 0.62)
+            border.color: Qt.rgba(1,1,1,0.1); border.width: 1
+
+            Column {
+                id: statsCol
+                anchors.left: parent.left; anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: 16
+                spacing: 18
+
+                // ── Temps de jeu ──
+                Column {
+                    width: parent.width
+                    spacing: 4
+                    Row {
+                        spacing: 7
+                        Text {
+                            text: ""
+                            font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 11
+                            color: bp.accentRgba(0.8)
+                        }
+                        Text {
+                            text: "Temps de jeu"
+                            font.pixelSize: 11; font.family: "Open Sans Regular"
+                            color: Qt.rgba(1,1,1,0.45)
+                        }
+                    }
+                    Text {
+                        text: bp.formatPlaytime(currentGame?.playtime_minutes || 0)
+                        font.pixelSize: 22; font.bold: true; font.family: "Open Sans Regular"
+                        color: (currentGame?.playtime_minutes || 0) > 0
+                            ? "#ffffff"
+                            : Qt.rgba(1,1,1,0.3)
+                    }
+                }
+
+                // ── Séparateur ──
+                Rectangle {
+                    width: parent.width; height: 1
+                    color: Qt.rgba(1,1,1,0.1)
+                }
+
+                // ── Dernière session ──
+                Column {
+                    width: parent.width
+                    spacing: 4
+                    Row {
+                        spacing: 7
+                        Text {
+                            text: ""
+                            font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 11
+                            color: bp.accentRgba(0.8)
+                        }
+                        Text {
+                            text: "Dernière session"
+                            font.pixelSize: 11; font.family: "Open Sans Regular"
+                            color: Qt.rgba(1,1,1,0.45)
+                        }
+                    }
+                    Text {
+                        text: bp.formatLastPlayed(currentGame?.last_played || 0)
+                        font.pixelSize: 14; font.family: "Open Sans Regular"
+                        color: (currentGame?.last_played || 0) > 0
+                            ? Qt.rgba(1,1,1,0.85)
+                            : Qt.rgba(1,1,1,0.3)
+                        wrapMode: Text.WordWrap
+                        width: parent.width
+                    }
+                }
+            }
+        }
+
         // ── Action buttons (bottom-right) ───────────────────────────────────
         Row {
             anchors.right: parent.right
@@ -537,6 +637,123 @@ Item {
                     }
                 }
             }
+        }
+    }
+
+    // ── BP Launch overlay ────────────────────────────────────────────────────
+    Item {
+        id: bpLaunchOverlay
+        anchors.fill: parent
+        visible: false
+        z: 200
+
+        property string logoSrc: ""
+        property string gameTitle: ""
+
+        Rectangle {
+            anchors.fill: parent
+            color: Qt.rgba(0, 0, 0, 0.88)
+        }
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 28
+            width: parent.width * 0.6
+
+            Image {
+                id: bpLaunchLogo
+                anchors.horizontalCenter: parent.horizontalCenter
+                source: bpLaunchOverlay.logoSrc
+                visible: bpLaunchOverlay.logoSrc !== "" && status === Image.Ready
+                fillMode: Image.PreserveAspectFit
+                width: Math.min(480, parent.width)
+                height: 200
+                asynchronous: true
+                opacity: 0
+                scale: 0.88
+                Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                Behavior on scale   { NumberAnimation { duration: 400; easing.type: Easing.OutBack; easing.overshoot: 1.06 } }
+            }
+
+            Text {
+                id: bpLaunchName
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: bpLaunchOverlay.gameTitle.toUpperCase()
+                visible: bpLaunchOverlay.logoSrc === "" || bpLaunchLogo.status !== Image.Ready
+                color: "#ffffff"
+                font.pixelSize: 52; font.bold: true; font.family: "Open Sans Regular"
+                font.letterSpacing: 5
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                width: parent.width
+                opacity: 0
+                scale: 0.88
+                Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                Behavior on scale   { NumberAnimation { duration: 400; easing.type: Easing.OutBack; easing.overshoot: 1.06 } }
+            }
+
+            Text {
+                id: bpStartText
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Start Game" + bpDotsStr
+                color: Qt.rgba(1,1,1,0.6)
+                font.pixelSize: 18; font.letterSpacing: 4; font.family: "Open Sans Regular"
+                horizontalAlignment: Text.AlignHCenter
+                opacity: 0
+                property string bpDotsStr: ""
+                Behavior on opacity { NumberAnimation { duration: 300 } }
+            }
+        }
+
+        Timer {
+            id: bpShowContent; interval: 200; repeat: false
+            onTriggered: {
+                bpLaunchLogo.opacity = 1; bpLaunchLogo.scale = 1.0
+                bpLaunchName.opacity = 1; bpLaunchName.scale = 1.0
+                bpShowStart.start()
+            }
+        }
+        Timer {
+            id: bpShowStart; interval: 350; repeat: false
+            onTriggered: { bpStartText.opacity = 1; bpDotsTimer.start() }
+        }
+        Timer {
+            id: bpDotsTimer; interval: 500; repeat: true
+            property int tick: 0
+            onTriggered: {
+                tick = (tick + 1) % 4
+                var s = ""
+                for (var i = 0; i < tick; i++) s += "◦"
+                bpStartText.bpDotsStr = s
+            }
+        }
+        Timer {
+            id: bpCloseTimer; interval: 3200; repeat: false
+            onTriggered: {
+                bpDotsTimer.stop()
+                bpFadeOut.start()
+            }
+        }
+        NumberAnimation {
+            id: bpFadeOut
+            target: bpLaunchOverlay; property: "opacity"
+            from: 1; to: 0; duration: 300
+            onStopped: {
+                bpLaunchOverlay.visible = false
+                bpLaunchOverlay.opacity = 1
+            }
+        }
+
+        function showLaunch(logo, name) {
+            logoSrc = logo || ""
+            gameTitle = name || ""
+            bpLaunchLogo.opacity = 0; bpLaunchLogo.scale = 0.88
+            bpLaunchName.opacity = 0; bpLaunchName.scale = 0.88
+            bpStartText.opacity = 0; bpStartText.bpDotsStr = ""
+            bpDotsTimer.tick = 0
+            visible = true
+            bpShowContent.start()
+            bpCloseTimer.start()
         }
     }
 

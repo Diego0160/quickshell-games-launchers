@@ -271,9 +271,10 @@ Rectangle {
         launchProcess.command = ["sh", "-c", "setsid " + game.exec + " &"]
         launchProcess.running = true
         launcher.enabled = false
-        if (config?.behavior?.close_on_launch ?? true) {
+        if (launcher.bigPictureMode) {
+            bpView.showLaunch(game.logo || "", game.name || "")
+        } else if (config?.behavior?.close_on_launch ?? true) {
             launchOverlay.colors = colors
-            // Récupère la position de la carte dans le repère du launcher
             var pos = cardItem ? cardItem.mapToItem(launcher, 0, 0) : null
             launchOverlay.show(
                 game.image || "",
@@ -646,15 +647,18 @@ Rectangle {
                     id: bigPictureBtn
                     anchors.right: parent.right; anchors.rightMargin: 8
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 30; height: 30; radius: 15
-                    color: bpMouse.containsMouse ? Qt.rgba(1,1,1,0.15) : "transparent"
+                    width: 32; height: 32; radius: 16
+                    color: launcher.bigPictureMode
+                        ? (colors.color5 || "#73ff00")
+                        : (bpMouse.containsMouse ? Qt.rgba(1,1,1,0.18) : Qt.rgba(1,1,1,0.08))
+                    border.color: launcher.bigPictureMode ? "transparent" : Qt.rgba(1,1,1,0.2)
+                    border.width: 1
                     Behavior on color { ColorAnimation { duration: 150 } }
                     Text {
                         anchors.centerIn: parent
-                        text: launcher.bigPictureMode ? "" : ""
-                        font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 13
-                        color: launcher.bigPictureMode ? (colors.color5||"#73ff00") : (colors.foreground||"#ffffff")
-                        opacity: 0.85
+                        text: "\uf26c"
+                        font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 14
+                        color: launcher.bigPictureMode ? "#1a1a1a" : (colors.foreground || "#ffffff")
                     }
                     MouseArea {
                         id: bpMouse
