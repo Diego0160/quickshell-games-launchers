@@ -220,7 +220,7 @@ class GameLauncher:
             return self.get_default_config()
 
     def migrate_config(self):
-        """Insert missing config keys into the user's existing config.toml."""
+        """Insert missing config keys and remove duplicates in config.toml."""
         NEW_KEYS = [
             ("behavior", "default_source_index", "0",
              "# Onglet actif au démarrage : 0=Tous, 1=premier onglet (Steam), 2=deuxième, etc."),
@@ -228,19 +228,31 @@ class GameLauncher:
              "# true = mémorise le dernier onglet actif entre les lancements (écrase default_source_index)"),
         ]
 
-        missing = [
-            (sec, key, val, cmt)
-            for sec, key, val, cmt in NEW_KEYS
-            if key not in self.config.get(sec, {})
-        ]
-        if not missing:
-            return
-
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+                original = f.read()
 
-            for section, key, default, comment in missing:
+            content = original
+
+            # Step 1: remove duplicate key lines (keep first occurrence)
+            for _, key, _, _ in NEW_KEYS:
+                seen = False
+                new_lines = []
+                for line in content.split('\n'):
+                    if re.match(rf'^\s*{re.escape(key)}\s*=', line):
+                        if not seen:
+                            new_lines.append(line)
+                            seen = True
+                        # skip duplicates silently
+                    else:
+                        new_lines.append(line)
+                content = '\n'.join(new_lines)
+
+            # Step 2: add truly missing keys (check raw text, not parsed config)
+            for section, key, default, comment in NEW_KEYS:
+                if re.search(rf'^\s*{re.escape(key)}\s*=', content, re.MULTILINE):
+                    continue  # already present
+
                 header = f"[{section}]"
                 if header not in content:
                     content += f"\n{header}\n{comment}\n{key} = {default}\n"
@@ -248,22 +260,20 @@ class GameLauncher:
 
                 pos = content.find(header)
                 lines = content[pos:].split('\n')
-
-                # Find end of this section (next section header)
                 end_idx = len(lines)
                 for i in range(1, len(lines)):
                     s = lines[i].strip()
                     if s.startswith('[') and not s.startswith('#') and s:
                         end_idx = i
                         break
-
                 lines.insert(end_idx, f"\n{comment}\n{key} = {default}\n")
                 content = content[:pos] + '\n'.join(lines)
 
-            with open(self.config_path, 'w', encoding='utf-8') as f:
-                f.write(content)
+            if content != original:
+                with open(self.config_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.config = self.load_config()
 
-            self.config = self.load_config()
         except Exception as e:
             print(f"Config migration error: {e}", file=sys.stderr)
 
