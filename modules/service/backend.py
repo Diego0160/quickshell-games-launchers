@@ -178,10 +178,14 @@ class GameLauncher:
 
     def load_config_entries(self) -> List[Dict[str, Any]]:
         games       = []
-        box_art_dir = self.config.get("box_art_dir") or self.config.get("animations", {}).get("box_art_dir", "")
+        manual_cfg  = self.config.get("manual", {})
+        box_art_dir = (manual_cfg.get("box_art_dir")
+                       or self.config.get("animations", {}).get("box_art_dir")
+                       or self.config.get("box_art_dir", ""))
         if box_art_dir:
             box_art_dir = expand_path(box_art_dir)
-        for entry in self.config.get("entries", []):
+        entries = manual_cfg.get("entries") or self.config.get("entries", [])
+        for entry in entries:
             title          = entry.get("title", "Unknown")
             launch_command = entry.get("launch_command", "")
             path_box_art   = entry.get("path_box_art", "")

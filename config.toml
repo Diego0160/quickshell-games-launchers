@@ -1,127 +1,205 @@
-# Game Launcher Configuration
+# ─────────────────────────────────────────────────────────────────────────────
+#   Quickshell Game Launcher  ·  config.toml
+#   https://github.com/Eaquo/quickshell-games-launchers
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+# ── DISPLAY ──────────────────────────────────────────────────────────────────
 
 [display]
-position = "bottom"  # center, top, bottom, left, right
-orientation = "horizontal"  # horizontal, vertical
-grid_size = [3, 1]   # colonnes x lignes (columns x rows)
-item_width = 400  # Card width (220 for vertical left/right, 400 for horizontal)
-item_height = 200  # Card height
+
+# Launcher position on screen
+#   Values: center | top | bottom | left | right
+position = "bottom"
+
+# Card layout direction
+#   Values: horizontal | vertical
+orientation = "horizontal"
+
+# Grid size [columns, rows]
+grid_size = [3, 1]
+
+# Card dimensions in pixels
+#   Recommended: 400×200 for horizontal · 220×300 for vertical / left / right
+item_width  = 400
+item_height = 200
+
+# Gap between cards (pixels)
 spacing = 20
 
+
+# ── APPEARANCE ───────────────────────────────────────────────────────────────
+
 [appearance]
-use_wallust = true
+
+# Use pywal / wallust palette for accent colors
+use_wallust  = true
 wallust_path = "~/.cache/wal/wal.json"
-show_game_names = true
-show_categories = true
-show_playtime = true
-blur_background = true
+
+# Frosted-glass background behind the launcher
+blur_background    = true
 background_opacity = 0.85
 
+
+# ── BEHAVIOR ─────────────────────────────────────────────────────────────────
+
 [behavior]
-sort_by = "recent"             # recent | alphabetical | playtime
+
+# Card sort order
+#   Values: recent | name | playtime
+sort_by = "recent"
+
+# Pin favorites to the top of the list
 show_favorites_first = true
+
+# Close the launcher automatically after launching a game
 close_on_launch = true
 
-# Onglet actif au démarrage :
-#   0 = Tous  |  1 = premier onglet réel (Steam)  |  2 = deuxième, etc.
+# Active source tab on startup
+#   0 = All  ·  1 = first tab (e.g. Steam)  ·  2 = second tab  ·  etc.
+#   Ignored when remember_source = true
 default_source_index = 0
 
-# true = mémorise le dernier onglet actif entre les lancements (écrase default_source_index)
+# Remember the last active tab between sessions (overrides default_source_index)
 remember_source = true
 
-# ╔══════════════════════════════════════════════════════════════════════════╗
-# ║                          STEAM GAME CONF                                 ║
-# ╚══════════════════════════════════════════════════════════════════════════╝
+
+# ── ANIMATIONS ───────────────────────────────────────────────────────────────
+
+[animations]
+
+# Launcher open / close animation duration (milliseconds)
+duration_ms = 300
+
+
+# ── STEAM ────────────────────────────────────────────────────────────────────
 
 [steam]
+
 enabled = true
+
+# Steam library folders — add as many as you have
 library_paths = [
     "~/.local/share/Steam/steamapps",
-    "~/.var/app/com.valvesoftware.Steam/data/Steam/steamapps", #Flatpak Steam
-    #"~/Game_Steam/steam/steamapps",
+    "~/.var/app/com.valvesoftware.Steam/data/Steam/steamapps",  # Flatpak
+    # "~/GameDisk/steam/steamapps",                              # Custom drive
 ]
 
-# ╔══════════════════════════════════════════════════════════════════════════╗
-# ║                         STEAMGRIDDB + OPTIMISATION                       ║
-# ╚══════════════════════════════════════════════════════════════════════════╝
 
-[steamgriddb]
-# Activer SteamGridDB pour de meilleures images
-enabled = true
-
-# Votre clé API SteamGridDB 
-api_key = ""   # Obtenez une clé gratuite sur https://www.steamgriddb.com/api/v2
-
-# Type d'image à télécharger
-image_type = "hero"
-prefer_animated = true
-
-# dimensions
-dimensions = [
-]
-styles = [
-]
-parallel_requests = true
-max_workers = 12
-request_timeout = 3
-cache_ttl_hours = 48
-
-# Trier les images par nombre de j'aimes uniquement (true = tri strict par likes)
-sort_by_likes = true
-# Nombre minimum de j'aimes pour accepter une image (0 = pas de filtre)
-min_likes = 0
-
-
-# ╔══════════════════════════════════════════════════════════════════════════╗
-# ║                          HEROIC GAME CONF                                ║
-# ╚══════════════════════════════════════════════════════════════════════════╝
+# ── HEROIC ───────────────────────────────────────────────────────────────────
 
 [heroic]
-enabled = true
+
+enabled      = true
 config_paths = ["~/.config/heroic"]
-scan_epic = true
-scan_gog = true
-scan_amazon = true
-scan_sideload = true
+
+# Which Heroic stores to include
+scan_epic     = true  # Epic Games Store
+scan_gog      = true  # GOG
+scan_amazon   = true  # Amazon Prime Gaming
+scan_sideload = true  # Games added manually in Heroic
+
+
+# ── LUTRIS ───────────────────────────────────────────────────────────────────
 
 [lutris]
+
 enabled = false
 db_path = "~/.local/share/lutris/pga.db"
 
+
+# ── FILTERING ────────────────────────────────────────────────────────────────
+
 [filtering]
 
+# Hide launchers, runtimes, tools — show only actual games
 games_only = false
 
-# ╔══════════════════════════════════════════════════════════════════════════╗
-# ║                          EXCLURE                                         ║
-# ╚══════════════════════════════════════════════════════════════════════════╝
-
-# Categories to exclude
+# Hide games belonging to these categories
+#   Common values: "desktop" | "steam" | "launcher"
 exclude_categories = ["desktop"]
 
-# Keywords to exclude
+# Hide games whose name contains any of these words (case-insensitive)
 exclude_keywords = [
     "Launcher",
-    "Manager", 
+    "Manager",
     "Runtime",
     "SDK",
     "Tool",
     "Aimlabs",
-    "Steam"
+    "Steam",
 ]
 
-# ╔══════════════════════════════════════════════════════════════════════════╗
-# ║                          MANUAL APPLICATION                              ║
-# ╚══════════════════════════════════════════════════════════════════════════╝
 
-[animations]
+# ── STEAMGRIDDB ──────────────────────────────────────────────────────────────
+#   Fetches high-quality cover art from steamgriddb.com
+#   Free API key: https://www.steamgriddb.com/api/v2
+# ─────────────────────────────────────────────────────────────────────────────
+
+[steamgriddb]
+
 enabled = true
-duration_ms = 300
-ease_type = "OutCubic"
+api_key = ""   # ← paste your key here
+
+# Image type to fetch
+#   Values: grid (portrait cover)  |  hero (wide banner)  |  logo  |  icon
+image_type = "hero"
+
+# Prefer animated WebP covers over static PNG when available
+prefer_animated = true
+
+# Fall back to Steam CDN images when no SGDB cover is found
+fallback_to_steam = true
+
+# ── Quality filters ───────────────────────────────────────────────────────
+
+# Rank results by number of likes (most liked first)
+sort_by_likes = true
+
+# Minimum likes required to accept an image  (0 = no filter)
+min_likes = 0
+
+# Restrict to specific image dimensions  (empty = any size)
+#   Examples: ["600x900", "460x215", "920x430", "3840x1240"]
+dimensions = []
+
+# Restrict to specific art styles  (empty = any style)
+#   Values: alternate | blurred | material | no_logo | white
+styles = []
+
+# ── Content filters ───────────────────────────────────────────────────────
+
+nsfw     = false
+humor    = false
+epilepsy = false
+
+# ── Performance ───────────────────────────────────────────────────────────
+
+# Download cover art for all games at once instead of one by one
+parallel_requests = true
+
+# Maximum simultaneous download threads
+max_workers = 12
+
+# Per-request network timeout (seconds)
+request_timeout = 3
+
+# How long to keep cached API responses before re-fetching (hours)
+cache_ttl_hours = 48
+
+
+# ── MANUAL ENTRIES ───────────────────────────────────────────────────────────
+#   Add custom apps or scripts not detected automatically.
+#   Drop box-art images in the folder below, then reference them by filename.
+# ─────────────────────────────────────────────────────────────────────────────
+
+[manual]
 
 box_art_dir = "~/.config/quickshell/game-launcher/box-art"
 
-[[entries]]
-title = "Game Library"
+# ── Add entries below — copy the block to add more ───────────────────────
+
+[[manual.entries]]
+title         = "Game Library"
 launch_command = "~/.config/quickshell/game-launcher/modules/service/run_in_terminal.sh python3 ~/.config/quickshell/game-launcher/modules/service/list_games.py"
-path_box_art = "library.png"
+path_box_art  = "library.png"
