@@ -1,82 +1,174 @@
 {
-  "steam:18147552013339066368:hero:animated": {
-    "url": "https://cdn2.steamgriddb.com/hero/371493bfd0120420acbe02aaf98c2f9b.webp",
-    "timestamp": "2026-05-19T18:17:51.214926"
+  "steam_cdn:2141910": {
+    "url": "https://cdn.cloudflare.steamstatic.com/steam/apps/2141910/header.jpg",
+    "timestamp": "2026-05-26T20:57:25.586038"
   },
-  "steam:16668887299806724096:hero:animated": {
-    "url": "https://cdn2.steamgriddb.com/hero/33407be4b5168f09b45b33b72739fedc.webp",
-    "timestamp": "2026-05-19T18:17:50.908848"
+  "steam_cdn:2622380": {
+    "url": "https://cdn.cloudflare.steamstatic.com/steam/apps/2622380/header.jpg",
+    "timestamp": "2026-05-26T20:57:25.593376"
   },
-  "steam:16282346762927079424:hero:animated": {
-    "url": "https://cdn2.steamgriddb.com/hero/d0095d3cd2f747ab23126a366739afb5.webp",
-    "timestamp": "2026-05-19T18:17:50.945234"
+  "steam_cdn:2073850": {
+    "url": "https://cdn.cloudflare.steamstatic.com/steam/apps/2073850/header.jpg",
+    "timestamp": "2026-05-26T20:57:25.595372"
+  },
+  "steam:18147552013339066368:hero:static": {
+    "url": "https://cdn2.steamgriddb.com/hero/2578eb9cdf020730f77793e8b58e165a.png",
+    "timestamp": "2026-05-26T21:09:58.055623"
+  },
+  "steam:9300932918551511040:hero:static": {
+    "url": "",
+    "timestamp": "2026-05-26T21:09:57.800340"
+  },
+  "steam:16668887299806724096:hero:static": {
+    "url": "https://cdn2.steamgriddb.com/hero/905372ea814051dfb31429fe44e18cab.png",
+    "timestamp": "2026-05-26T21:09:58.040096"
+  },
+  "steam:16516587033641091072:hero:static": {
+    "url": "https://cdn2.steamgriddb.com/hero/23021cdcfb38fe29dcea064ebe1ecce4.png",
+    "timestamp": "2026-05-26T21:09:58.070906"
+  },
+  "steam:16282346762927079424:hero:static": {
+    "url": "https://cdn2.steamgriddb.com/hero/2ee2b71a912ddc28699435eca8bd6486.png",
+    "timestamp": "2026-05-26T21:09:58.057863"
+  },
+  "steam:2622380:hero:static": {
+    "url": "https://cdn2.steamgriddb.com/hero/cf5ab611420d70c9cc65f5033febd75a.png",
+    "timestamp": "2026-05-26T21:09:57.529518"
+  },
+  "steam:16687948218637484032:hero:static": {
+    "url": "https://cdn2.steamgriddb.com/hero/d1fcdf15cb97c47d0ed1e1e10773ae36.png",
+    "timestamp": "2026-05-26T21:09:58.052966"
+  },
+  "steam:2141910:hero:static": {
+    "url": "https://cdn2.steamgriddb.com/hero/db8b1247beaa42158ebfe5c489ca36db.png",
+    "timestamp": "2026-05-26T21:09:57.533811"
+  },
+  "steam:2073850:hero:static": {
+    "url": "https://cdn2.steamgriddb.com/hero/755638f42b12fb67ef41212a511c5970.png",
+    "timestamp": "2026-05-26T21:09:57.536229"
+  },
+  "steam:17278711383835279360:hero:static": {
+    "url": "https://cdn2.steamgriddb.com/hero/22ac3c5a5bf0b520d281c122d1490650.png",
+    "timestamp": "2026-05-26T21:09:58.071859"
   },
   "steam:2622380:hero:animated": {
     "url": "https://cdn2.steamgriddb.com/hero/4d71250c3bcaaec05fa05f6a75e73590.webp",
-    "timestamp": "2026-05-19T18:17:50.114250"
-  },
-  "steam:16687948218637484032:hero:animated": {
-    "url": "https://cdn2.steamgriddb.com/hero/ccf34d1d23d3d68fdc037ed0a53761d5.webp",
-    "timestamp": "2026-05-19T18:17:50.932101"
-  },
-  "steam:2141910:hero:animated": {
-    "url": "https://cdn2.steamgriddb.com/hero/a820b53dd1f31a261bbe05f4db33831e.webp",
-    "timestamp": "2026-05-19T18:17:50.123446"
+    "timestamp": "2026-05-26T21:09:57.797268"
   },
   "steam:2073850:hero:animated": {
     "url": "https://cdn2.steamgriddb.com/hero/ef7cbd5b955d10aa0705eceb0c97f2f1.webp",
-    "timestamp": "2026-05-19T18:17:50.125296"
+    "timestamp": "2026-05-26T21:09:57.801205"
   },
-  "steam:17278711383835279360:hero:animated": {
-    "url": "https://cdn2.steamgriddb.com/hero/6ceb6724537a1aecc263416847ca1219.webp",
-    "timestamp": "2026-05-19T18:17:50.931798"
-  },
-  "steam:9300932918551511040:hero:animated": {
-    "url": "",
-    "timestamp": "2026-05-19T18:17:50.386256"
-  },
-  "steam:2622380:logo": {
-    "url": "https://cdn2.steamgriddb.com/logo/c004e3f40f8e2c4b8014d89730d1b42e.png",
-    "timestamp": "2026-05-19T18:17:50.382806"
-  },
-  "steam:2141910:logo": {
-    "url": "https://cdn2.steamgriddb.com/logo/ed277964a8959e72a0d987e598dfbe72.png",
-    "timestamp": "2026-05-19T18:17:50.400315"
-  },
-  "steam:16516587033641091072:hero:animated": {
-    "url": "https://cdn2.steamgriddb.com/hero/bb2df1ceec69185fc8559f9c41052e2f.webp",
-    "timestamp": "2026-05-19T18:17:51.216332"
+  "steam:2141910:hero:animated": {
+    "url": "https://cdn2.steamgriddb.com/hero/a820b53dd1f31a261bbe05f4db33831e.webp",
+    "timestamp": "2026-05-26T21:09:57.807806"
   },
   "steam:2073850:logo": {
     "url": "https://cdn2.steamgriddb.com/logo/4da4344c1c190ab695fb4d65e0d7a9c7.png",
-    "timestamp": "2026-05-19T18:17:50.402980"
+    "timestamp": "2026-05-26T21:09:58.064053"
+  },
+  "steam:2141910:logo": {
+    "url": "https://cdn2.steamgriddb.com/logo/ed277964a8959e72a0d987e598dfbe72.png",
+    "timestamp": "2026-05-26T21:09:58.065846"
+  },
+  "steam:9300932918551511040:hero:animated": {
+    "url": "",
+    "timestamp": "2026-05-26T21:09:58.579935"
+  },
+  "steam:2622380:logo": {
+    "url": "https://cdn2.steamgriddb.com/logo/c004e3f40f8e2c4b8014d89730d1b42e.png",
+    "timestamp": "2026-05-26T21:09:58.068150"
+  },
+  "steam:16668887299806724096:hero:animated": {
+    "url": "https://cdn2.steamgriddb.com/hero/33407be4b5168f09b45b33b72739fedc.webp",
+    "timestamp": "2026-05-26T21:09:59.081684"
+  },
+  "steam:16687948218637484032:hero:animated": {
+    "url": "https://cdn2.steamgriddb.com/hero/ccf34d1d23d3d68fdc037ed0a53761d5.webp",
+    "timestamp": "2026-05-26T21:09:59.068074"
+  },
+  "steam:16282346762927079424:hero:animated": {
+    "url": "https://cdn2.steamgriddb.com/hero/d0095d3cd2f747ab23126a366739afb5.webp",
+    "timestamp": "2026-05-26T21:09:59.089856"
+  },
+  "steam:2073850:hero:slideshow": {
+    "url": "[\"https://cdn2.steamgriddb.com/hero/755638f42b12fb67ef41212a511c5970.png\", \"https://cdn2.steamgriddb.com/hero/c7c059867b011d13fc2227389c4582b0.png\", \"https://cdn2.steamgriddb.com/hero/574ce7384b4dc90626d4c3cea9d61b9a.png\"]",
+    "timestamp": "2026-05-26T21:09:58.315489"
+  },
+  "steam:2141910:hero:slideshow": {
+    "url": "[\"https://cdn2.steamgriddb.com/hero/db8b1247beaa42158ebfe5c489ca36db.png\", \"https://cdn2.steamgriddb.com/hero/623040922099375a93bfbd8b3234d997.png\", \"https://cdn2.steamgriddb.com/hero/a90f0bccdf75914166c4ed9ed50b771d.png\"]",
+    "timestamp": "2026-05-26T21:09:58.315744"
+  },
+  "steam:2622380:hero:slideshow": {
+    "url": "[\"https://cdn2.steamgriddb.com/hero/cf5ab611420d70c9cc65f5033febd75a.png\", \"https://cdn2.steamgriddb.com/hero/8ec28b09ec95f08279e82459f1289c34.png\", \"https://cdn2.steamgriddb.com/hero/f798d251cc123e0e67401ff04260f4b3.png\"]",
+    "timestamp": "2026-05-26T21:09:58.319303"
+  },
+  "steam:18147552013339066368:hero:animated": {
+    "url": "https://cdn2.steamgriddb.com/hero/371493bfd0120420acbe02aaf98c2f9b.webp",
+    "timestamp": "2026-05-26T21:09:59.110724"
+  },
+  "steam:17278711383835279360:hero:animated": {
+    "url": "https://cdn2.steamgriddb.com/hero/6ceb6724537a1aecc263416847ca1219.webp",
+    "timestamp": "2026-05-26T21:09:59.087454"
+  },
+  "steam:16516587033641091072:hero:animated": {
+    "url": "https://cdn2.steamgriddb.com/hero/bb2df1ceec69185fc8559f9c41052e2f.webp",
+    "timestamp": "2026-05-26T21:09:59.097440"
   },
   "steam:9300932918551511040:logo": {
     "url": "",
-    "timestamp": "2026-05-19T18:17:50.939418"
-  },
-  "steam:16668887299806724096:logo": {
-    "url": "https://cdn2.steamgriddb.com/logo/8336f05746072f34cde26ca89a7d4e2e.png",
-    "timestamp": "2026-05-19T18:17:51.701726"
-  },
-  "steam:17278711383835279360:logo": {
-    "url": "https://cdn2.steamgriddb.com/logo/7ca57a9f85a19a6e4b9a248c1daca185.png",
-    "timestamp": "2026-05-19T18:17:51.715207"
+    "timestamp": "2026-05-26T21:09:59.088848"
   },
   "steam:16687948218637484032:logo": {
     "url": "https://cdn2.steamgriddb.com/logo/69f5d5c1249e17f4ac1d5b716db47105.png",
-    "timestamp": "2026-05-19T18:17:51.736137"
+    "timestamp": "2026-05-26T21:09:59.875756"
+  },
+  "steam:16668887299806724096:logo": {
+    "url": "https://cdn2.steamgriddb.com/logo/8336f05746072f34cde26ca89a7d4e2e.png",
+    "timestamp": "2026-05-26T21:09:59.886863"
   },
   "steam:16282346762927079424:logo": {
     "url": "https://cdn2.steamgriddb.com/logo/fe45e3227f3805b1314414203c4e5206.png",
-    "timestamp": "2026-05-19T18:17:51.756575"
+    "timestamp": "2026-05-26T21:09:59.885429"
   },
-  "steam:18147552013339066368:logo": {
-    "url": "https://cdn2.steamgriddb.com/logo/1e8ca836c962598551882e689265c1c5.png",
-    "timestamp": "2026-05-19T18:17:52.019504"
+  "steam:17278711383835279360:logo": {
+    "url": "https://cdn2.steamgriddb.com/logo/7ca57a9f85a19a6e4b9a248c1daca185.png",
+    "timestamp": "2026-05-26T21:09:59.889266"
   },
   "steam:16516587033641091072:logo": {
     "url": "https://cdn2.steamgriddb.com/logo/2cb20cf1015104c145ddd098f482005e.png",
-    "timestamp": "2026-05-19T18:17:52.014804"
+    "timestamp": "2026-05-26T21:09:59.866891"
+  },
+  "steam:18147552013339066368:logo": {
+    "url": "https://cdn2.steamgriddb.com/logo/1e8ca836c962598551882e689265c1c5.png",
+    "timestamp": "2026-05-26T21:09:59.883508"
+  },
+  "steam:9300932918551511040:hero:slideshow": {
+    "url": "[]",
+    "timestamp": "2026-05-26T21:09:59.621424"
+  },
+  "steam:16516587033641091072:hero:slideshow": {
+    "url": "[\"https://cdn2.steamgriddb.com/hero/23021cdcfb38fe29dcea064ebe1ecce4.png\", \"https://cdn2.steamgriddb.com/hero/a04b2bdc1d9d9c72240d6ab2118ef8f1.png\", \"https://cdn2.steamgriddb.com/hero/538bb178cf73205573bf842c265f1a69.png\"]",
+    "timestamp": "2026-05-26T21:10:00.629763"
+  },
+  "steam:16282346762927079424:hero:slideshow": {
+    "url": "[\"https://cdn2.steamgriddb.com/hero/2ee2b71a912ddc28699435eca8bd6486.png\", \"https://cdn2.steamgriddb.com/hero/0df5627695c1aaf2a2be5c738a80f0c3.png\", \"https://cdn2.steamgriddb.com/hero/2750dc2828e8f769ede73fd216f19b62.png\"]",
+    "timestamp": "2026-05-26T21:10:00.647152"
+  },
+  "steam:16687948218637484032:hero:slideshow": {
+    "url": "[\"https://cdn2.steamgriddb.com/hero/d1fcdf15cb97c47d0ed1e1e10773ae36.png\", \"https://cdn2.steamgriddb.com/hero/b751142d1db64622c665bf40839bba13.png\", \"https://cdn2.steamgriddb.com/hero/4fc7fd6e1cf252fb1a7403a8b1ce0476.png\"]",
+    "timestamp": "2026-05-26T21:10:00.652505"
+  },
+  "steam:16668887299806724096:hero:slideshow": {
+    "url": "[\"https://cdn2.steamgriddb.com/hero/905372ea814051dfb31429fe44e18cab.png\", \"https://cdn2.steamgriddb.com/hero/3bfe11904d16672c7c87e30d58894339.png\", \"https://cdn2.steamgriddb.com/hero/d2d195657240f493374e95e2b75cc8cf.png\"]",
+    "timestamp": "2026-05-26T21:10:00.662627"
+  },
+  "steam:18147552013339066368:hero:slideshow": {
+    "url": "[\"https://cdn2.steamgriddb.com/hero/2578eb9cdf020730f77793e8b58e165a.png\", \"https://cdn2.steamgriddb.com/hero/3fcedf144be9f3dff1145db6c515fb34.png\", \"https://cdn2.steamgriddb.com/hero/3eaa6a718459ac1e33359767e8254e8c.png\"]",
+    "timestamp": "2026-05-26T21:10:00.666654"
+  },
+  "steam:17278711383835279360:hero:slideshow": {
+    "url": "[\"https://cdn2.steamgriddb.com/hero/22ac3c5a5bf0b520d281c122d1490650.png\", \"https://cdn2.steamgriddb.com/hero/5806bf49344160367e3a73de7dd3a9b5.png\", \"https://cdn2.steamgriddb.com/hero/f187a23c3ee681ef6913f31fd6d6446b.png\"]",
+    "timestamp": "2026-05-26T21:10:00.671313"
   }
 }

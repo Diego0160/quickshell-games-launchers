@@ -63,7 +63,14 @@ class ImageCache:
         valid = set()
         for entry in self.cache.values():
             url = entry.get('url', '')
-            if url and url.startswith('http'):
+            if url and url.startswith('['):
+                try:
+                    for u in json.loads(url):
+                        if u and u.startswith('http'):
+                            valid.add(self.cached_image_path(u))
+                except Exception:
+                    pass
+            elif url and url.startswith('http'):
                 valid.add(self.cached_image_path(url))
         for f in self.cache_dir.iterdir():
             if f.is_file() and str(f) not in valid:

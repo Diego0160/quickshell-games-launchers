@@ -46,8 +46,9 @@ Item {
     property var heroImages: {
         var g = currentGame
         if (!g) return []
+        if (g.images && g.images.length > 0) return g.images
         var imgs = []
-        if (g.image)      imgs.push(g.image)
+        if (g.image) imgs.push(g.image)
         if (g.hero_image && g.hero_image !== g.image) imgs.push(g.hero_image)
         return imgs
     }
@@ -157,9 +158,6 @@ Item {
         layer.enabled: true
         layer.effect: MultiEffect { blurEnabled: true; blur: 1.0; blurMax: 48 }
     }
-
-    // Hero toujours statique — moins de ressources pour la grande image
-    property string heroSrc: currentGame?.image || ""
 
     // ── TOP BAR ─────────────────────────────────────────────────────────────
     Rectangle {

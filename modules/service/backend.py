@@ -384,6 +384,9 @@ class GameLauncher:
                 url = game.get(field, "")
                 if url and url.startswith("http"):
                     urls.append(url)
+            for url in game.get("images", []):
+                if url and url.startswith("http"):
+                    urls.append(url)
         if not urls:
             return
         tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)

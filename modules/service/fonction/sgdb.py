@@ -325,6 +325,81 @@ class SGDBClient:
         sgdb_url = self.get_steamgriddb_cover_url(app_id, platform=platform, game_name=game_name)
         return sgdb_url if sgdb_url else art_url
 
+    # ── Slideshow ──────────────────────────────────────────────────────────
+
+    def get_steamgriddb_slideshow_urls(self, app_id: str, platform: str = "steam",
+                                       game_name: str = "", n: int = 3) -> List[str]:
+        """Returns top N static image URLs for BigPicture hero slideshow."""
+        sgdb_config = self.config.get("steamgriddb", {})
+        if not sgdb_config.get("enabled", False):
+            return []
+        api_key = sgdb_config.get("api_key", "")
+        if not api_key:
+            return []
+
+        image_type = sgdb_config.get("image_type", "grid")
+        endpoint_map = {"grid": "grids", "hero": "heroes", "logo": "logos", "icon": "icons"}
+        endpoint = endpoint_map.get(image_type, "grids")
+
+        cache_key = f"{platform}:{app_id}:{image_type}:slideshow"
+        cached_val = self.image_cache.get(cache_key)
+        if cached_val is not None:
+            try:
+                urls = json.loads(cached_val)
+                return [self._local_or_url(u) for u in urls]
+            except Exception:
+                return []
+
+        timeout = sgdb_config.get("request_timeout", 3)
+        base_url = f"https://www.steamgriddb.com/api/v2/{endpoint}/{platform}/{app_id}"
+
+        def score_image(img):
+            likes = img.get("likes") or 0
+            if sgdb_config.get("sort_by_likes", False):
+                return likes
+            score = likes * 1000
+            if img.get("width") and img.get("height"):
+                score += img["width"] * img["height"] // 100
+            if img.get("mime") == "image/png":
+                score += 500
+            return score
+
+        def do_request(url):
+            try:
+                req = urllib.request.Request(url)
+                req.add_header("Authorization", f"Bearer {api_key}")
+                req.add_header("User-Agent", "QuickShell-GameLauncher/2.0")
+                req.add_header("Accept", "application/json")
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    data = json.loads(resp.read().decode())
+                    if data.get("success") and data.get("data"):
+                        return data["data"]
+            except Exception:
+                pass
+            return None
+
+        def top_images(raw, count):
+            if not raw:
+                return []
+            imgs = [img for img in raw if img.get("width", 0) >= 300]
+            imgs = sorted(imgs, key=score_image, reverse=True)
+            return [img.get("url") or img.get("thumb")
+                    for img in imgs[:count] if img.get("url") or img.get("thumb")]
+
+        query = "?types=static&mimes=image/png&nsfw=false&humor=false&epilepsy=false"
+        raw = do_request(base_url + query)
+        urls = top_images(raw, n)
+
+        if not urls and game_name:
+            sgdb_id = self._search_sgdb_id_by_name(game_name, api_key, timeout)
+            if sgdb_id:
+                name_base = f"https://www.steamgriddb.com/api/v2/{endpoint}/game/{sgdb_id}"
+                raw = do_request(name_base + query)
+                urls = top_images(raw, n)
+
+        self.image_cache.set(cache_key, json.dumps(urls))
+        return [self._local_or_url(u) for u in urls]
+
     # ── Fetch parallèle ────────────────────────────────────────────────────
 
     def fetch_images_parallel(self, games: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -373,19 +448,22 @@ class SGDBClient:
                     animated_url = None
 
             logo_url = self.get_steamgriddb_logo_url(appid, platform, game_name=name)
-            return idx, static_url, animated_url, logo_url
+            slideshow_urls = self.get_steamgriddb_slideshow_urls(appid, platform, game_name=name, n=3)
+            return idx, static_url, animated_url, logo_url, slideshow_urls
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {executor.submit(fetch_all, item): item for item in games_to_fetch}
             for future in as_completed(futures):
                 try:
-                    idx, static_url, animated_url, logo_url = future.result()
+                    idx, static_url, animated_url, logo_url, slideshow_urls = future.result()
                     if static_url:
                         games[idx]["image"] = static_url
                     if animated_url:
                         games[idx]["image_animated"] = animated_url
                     if logo_url:
                         games[idx]["logo"] = logo_url
+                    if slideshow_urls:
+                        games[idx]["images"] = slideshow_urls
                 except Exception:
                     pass
 
