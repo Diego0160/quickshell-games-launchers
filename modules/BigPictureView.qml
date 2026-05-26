@@ -25,25 +25,75 @@ Item {
         bpLaunchOverlay.showLaunch(logo, name)
     }
 
-    property var currentGame: filteredGames.length > 0 ? filteredGames[selectedIndex] : null
+    // ── Search ─────────────────────────────────────────────────────────────
+    property string bpSearch: ""
+    property var bpGames: {
+        if (bpSearch === "") return filteredGames
+        var q = bpSearch.toLowerCase()
+        return filteredGames.filter(g => (g.name || "").toLowerCase().includes(q))
+    }
+    property int bpIndex: 0
+    onBpSearchChanged: {
+        var cur = currentGame
+        var idx = bpGames.indexOf(cur)
+        bpIndex = idx >= 0 ? idx : 0
+    }
+    onSelectedIndexChanged: { if (bpSearch === "") bpIndex = selectedIndex }
+
+    property var currentGame: bpGames.length > 0 ? bpGames[bpIndex] : null
+
+    // ── Slideshow ───────────────────────────────────────────────────────────
+    property var heroImages: {
+        var g = currentGame
+        if (!g) return []
+        var imgs = []
+        if (g.image)      imgs.push(g.image)
+        if (g.hero_image && g.hero_image !== g.image) imgs.push(g.hero_image)
+        return imgs
+    }
+    property int heroSlideIndex: 0
+    onCurrentGameChanged: heroSlideIndex = 0
+
+    Timer {
+        id: slideshowTimer
+        interval: 6000
+        running: bp.heroImages.length > 1
+        repeat: true
+        onTriggered: {
+            heroFadeOut.start()
+        }
+    }
+
+    SequentialAnimation {
+        id: heroFadeOut
+        NumberAnimation { target: heroImg; property: "opacity"; to: 0; duration: 400; easing.type: Easing.InQuad }
+        ScriptAction { script: { bp.heroSlideIndex = (bp.heroSlideIndex + 1) % Math.max(bp.heroImages.length, 1) } }
+        NumberAnimation { target: heroImg; property: "opacity"; to: 1; duration: 400; easing.type: Easing.OutQuad }
+    }
+
+    // Hero toujours statique — slide entre image SGDB et hero Steam CDN
+    property string heroSrc: heroImages.length > 0 ? heroImages[heroSlideIndex] : ""
 
     focus: true
 
     Keys.onPressed: (event) => {
         if (event.key === Qt.Key_Escape) {
+            if (bp.bpSearch !== "") { bp.bpSearch = ""; bpSearchInput.text = ""; event.accepted = true; return }
             bp.exitRequested(); event.accepted = true
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             if (bp.currentGame) bp.launchRequested(bp.currentGame)
             event.accepted = true
         } else if (event.key === Qt.Key_Left) {
-            if (bp.selectedIndex > 0) bp.indexChanged(bp.selectedIndex - 1)
+            if (bp.bpIndex > 0) { bp.bpIndex--; bp.indexChanged(bp.filteredGames.indexOf(bp.currentGame)) }
             event.accepted = true
         } else if (event.key === Qt.Key_Right) {
-            if (bp.selectedIndex < bp.filteredGames.length - 1) bp.indexChanged(bp.selectedIndex + 1)
+            if (bp.bpIndex < bp.bpGames.length - 1) { bp.bpIndex++; bp.indexChanged(bp.filteredGames.indexOf(bp.currentGame)) }
             event.accepted = true
         } else if (event.key === Qt.Key_F && (event.modifiers & Qt.AltModifier)) {
             if (bp.currentGame) bp.favoriteToggleRequested(bp.currentGame)
             event.accepted = true
+        } else if (event.key === Qt.Key_Slash || (event.key === Qt.Key_F && (event.modifiers & Qt.ControlModifier))) {
+            bpSearchInput.forceActiveFocus(); event.accepted = true
         }
     }
 
@@ -185,16 +235,58 @@ Item {
             }
         }
 
-        // Right: game count + exit button
+        // Right: search + game count + exit
         Row {
             anchors.right: parent.right
             anchors.rightMargin: 20
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 12
+            spacing: 10
+
+            // Search bar — expands on focus or when text present
+            Rectangle {
+                id: searchBox
+                property bool expanded: bpSearchInput.activeFocus || bp.bpSearch !== ""
+                height: 36
+                width: expanded ? 220 : 36
+                radius: 18
+                color: expanded ? Qt.rgba(1,1,1,0.12) : Qt.rgba(1,1,1,0.08)
+                border.color: bpSearchInput.activeFocus ? (colors.color5 || "#73ff00") : Qt.rgba(1,1,1,0.15)
+                border.width: 1
+                clip: true
+                Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on color  { ColorAnimation  { duration: 150 } }
+
+                Row {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10; anchors.rightMargin: 10
+                    spacing: 6
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "\uf002"
+                        font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 12
+                        color: bpSearchInput.activeFocus ? (colors.color5 || "#73ff00") : Qt.rgba(1,1,1,0.6)
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+                    TextInput {
+                        id: bpSearchInput
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - 22
+                        color: "#ffffff"
+                        font.pixelSize: 13; font.family: "Open Sans Regular"
+                        selectByMouse: true
+                        onTextChanged: bp.bpSearch = text
+                        Keys.onEscapePressed: { text = ""; bp.bpSearch = ""; bp.forceActiveFocus() }
+                    }
+                }
+                MouseArea {
+                    anchors.fill: parent; cursorShape: Qt.IBeamCursor
+                    onClicked: bpSearchInput.forceActiveFocus()
+                }
+            }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: bp.filteredGames.length + " " + i18n.t("games")
+                text: bp.bpGames.length + " " + i18n.t("games")
                 font.pixelSize: 12; font.family: "Open Sans Regular"
                 color: Qt.rgba(1,1,1,0.4)
             }
@@ -204,8 +296,7 @@ Item {
                 color: exitM.containsMouse ? Qt.rgba(1,0.2,0.2,0.35) : Qt.rgba(1,1,1,0.08)
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Text {
-                    anchors.centerIn: parent
-                    text: ""
+                    anchors.centerIn: parent; text: "\uf00d"
                     font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 14
                     color: exitM.containsMouse ? "#ff6666" : Qt.rgba(1,1,1,0.75)
                     Behavior on color { ColorAnimation { duration: 150 } }
@@ -547,7 +638,7 @@ Item {
                 color: Qt.rgba(1,1,1,0.7)
             }
             MouseArea { id: leftArrowM; anchors.fill: parent; hoverEnabled: true
-                onClicked: if (bp.selectedIndex > 0) bp.indexChanged(bp.selectedIndex - 1) }
+                onClicked: if (bp.bpIndex > 0) { bp.bpIndex--; bp.indexChanged(bp.filteredGames.indexOf(bp.currentGame)) } }
         }
 
         // Right arrow
@@ -562,7 +653,7 @@ Item {
                 color: Qt.rgba(1,1,1,0.7)
             }
             MouseArea { id: rightArrowM; anchors.fill: parent; hoverEnabled: true
-                onClicked: if (bp.selectedIndex < bp.filteredGames.length - 1) bp.indexChanged(bp.selectedIndex + 1) }
+                onClicked: if (bp.bpIndex < bp.bpGames.length - 1) { bp.bpIndex++; bp.indexChanged(bp.filteredGames.indexOf(bp.currentGame)) } }
         }
 
         ListView {
@@ -572,8 +663,8 @@ Item {
             anchors.topMargin: 10; anchors.bottomMargin: 10
             orientation: ListView.Horizontal
             spacing: 8
-            model: bp.filteredGames
-            currentIndex: bp.selectedIndex
+            model: bp.bpGames
+            currentIndex: bp.bpIndex
             highlightRangeMode: ListView.StrictlyEnforceRange
             highlightMoveDuration: 250
             preferredHighlightBegin: width / 2 - 96
@@ -581,22 +672,24 @@ Item {
             clip: true
 
             onCurrentIndexChanged: {
-                if (currentIndex !== bp.selectedIndex)
-                    bp.indexChanged(currentIndex)
+                if (currentIndex !== bp.bpIndex) {
+                    bp.bpIndex = currentIndex
+                    bp.indexChanged(bp.filteredGames.indexOf(bp.currentGame))
+                }
             }
 
             MouseArea {
                 anchors.fill: parent; propagateComposedEvents: true; focus: false
                 onWheel: (wheel) => {
-                    if (wheel.angleDelta.y > 0 && bp.selectedIndex > 0) bp.indexChanged(bp.selectedIndex - 1)
-                    else if (wheel.angleDelta.y < 0 && bp.selectedIndex < bp.filteredGames.length - 1) bp.indexChanged(bp.selectedIndex + 1)
+                    if (wheel.angleDelta.y > 0 && bp.bpIndex > 0) { bp.bpIndex--; bp.indexChanged(bp.filteredGames.indexOf(bp.currentGame)) }
+                    else if (wheel.angleDelta.y < 0 && bp.bpIndex < bp.bpGames.length - 1) { bp.bpIndex++; bp.indexChanged(bp.filteredGames.indexOf(bp.currentGame)) }
                     wheel.accepted = true
                 }
                 onClicked: (mouse) => mouse.accepted = false
             }
 
             delegate: Item {
-                property bool isSelected: index === bp.selectedIndex
+                property bool isSelected: index === bp.bpIndex
                 width: isSelected ? 186 : 155
                 height: stripList.height
                 Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
@@ -695,7 +788,7 @@ Item {
 
                     MouseArea {
                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                        onClicked: bp.indexChanged(index)
+                        onClicked: { bp.bpIndex = index; bp.indexChanged(bp.filteredGames.indexOf(bp.bpGames[index])) }
                         onDoubleClicked: bp.launchRequested(modelData)
                     }
                 }

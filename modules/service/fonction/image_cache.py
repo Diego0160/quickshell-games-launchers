@@ -56,6 +56,22 @@ class ImageCache:
         if expired_keys:
             self._save_cache()
 
+    def clear_orphaned_images(self):
+        """Supprime les fichiers locaux qui ne correspondent plus à aucune entrée valide du cache."""
+        if not self.cache_dir.exists():
+            return
+        valid = set()
+        for entry in self.cache.values():
+            url = entry.get('url', '')
+            if url and url.startswith('http'):
+                valid.add(self.cached_image_path(url))
+        for f in self.cache_dir.iterdir():
+            if f.is_file() and str(f) not in valid:
+                try:
+                    f.unlink()
+                except Exception:
+                    pass
+
     def cached_image_path(self, url: str) -> str:
         import hashlib
         from urllib.parse import urlparse

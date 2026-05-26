@@ -96,9 +96,17 @@ class GameLauncher:
         """Insère les clés manquantes et déduplique dans config.toml."""
         NEW_KEYS = [
             ("behavior", "default_source_index", "0",
-             "# Onglet actif au démarrage : 0=Tous, 1=premier onglet (Steam), 2=deuxième, etc."),
+             "# Active source tab on startup: 0=All, 1=first tab, 2=second, etc."),
             ("behavior", "remember_source", "false",
-             "# true = mémorise le dernier onglet actif entre les lancements (écrase default_source_index)"),
+             "# Remember the last active tab between sessions (overrides default_source_index)"),
+            ("steamgriddb", "fallback_to_steam", "true",
+             "# Fall back to Steam CDN images when no SGDB cover is found"),
+            ("steamgriddb", "nsfw", "false",
+             "# Include NSFW content"),
+            ("steamgriddb", "humor", "false",
+             "# Include humor / meme content"),
+            ("steamgriddb", "epilepsy", "false",
+             "# Include epilepsy-triggering content"),
         ]
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
@@ -388,6 +396,7 @@ class GameLauncher:
         )
 
     def download_missing_images(self, urls_file: str):
+        self.image_cache.clear_orphaned_images()
         try:
             with open(urls_file) as f:
                 urls = json.load(f)
