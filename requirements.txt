@@ -1,2 +1,4 @@
 # No external dependencies required!
 # Using tomllib (built-in since Python 3.11+)
+vdf>=3.4
+evdev>=1.6
