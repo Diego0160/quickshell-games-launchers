@@ -16,6 +16,7 @@ Rectangle {
     property int selectedIndex: 0
     property string searchText: ""
     property string selectedSource: "all"
+    property bool isLoading: false
 
     // Config values
     property string orientation: config?.display?.orientation ?? "horizontal"
@@ -175,6 +176,7 @@ Rectangle {
         property string output: ""
         stdout: SplitParser { onRead: data => gamesProcess.output += data }
         onExited: {
+            launcher.isLoading = false
             try {
                 const result = JSON.parse(gamesProcess.output)
                 gamesData = result.games || []
@@ -216,7 +218,7 @@ Rectangle {
         }
     }
     
-    function loadGames() { gamesProcess.running = true }
+    function loadGames() { launcher.isLoading = true; gamesProcess.running = true }
 
     function filterGames() {
         let result = gamesData.slice()
@@ -815,7 +817,33 @@ Rectangle {
                     Rectangle {
                         visible: filteredGames.length === 0
                         anchors.centerIn: parent; width: 300; height: 200; color: "transparent"
+
+                        // Chargement — points qui sautent
+                        Row {
+                            visible: launcher.isLoading
+                            anchors.centerIn: parent
+                            spacing: 14
+                            Repeater {
+                                model: 3
+                                delegate: Rectangle {
+                                    width: 12; height: 12; radius: 6
+                                    color: colors.color5 || "#00ffff"
+                                    y: 0
+                                    SequentialAnimation on y {
+                                        loops: Animation.Infinite
+                                        running: launcher.isLoading
+                                        PauseAnimation  { duration: index * 160 }
+                                        NumberAnimation { to: -18; duration: 350; easing.type: Easing.OutCubic }
+                                        NumberAnimation { to:   0; duration: 350; easing.type: Easing.InCubic }
+                                        PauseAnimation  { duration: (2 - index) * 160 }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Aucun jeu trouvé
                         Column {
+                            visible: !launcher.isLoading
                             anchors.centerIn: parent; spacing: 16
                             Text { anchors.horizontalCenter: parent.horizontalCenter; text: "🎮"; font.pixelSize: 64; opacity: 0.3 }
                             Text { anchors.horizontalCenter: parent.horizontalCenter; text: i18n.t("no_games"); font.pixelSize: 18; color: colors.foreground||"#ffffff"; opacity: 0.7 }
