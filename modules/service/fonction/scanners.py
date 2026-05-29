@@ -21,7 +21,7 @@ def expand_path(path: str) -> Path:
 class GameScanner:
     def __init__(self, config: Dict[str, Any], sgdb: Optional[SGDBClient] = None):
         self.config = config
-        self.sgdb   = sgdb
+        self.sgdb = sgdb
         self._heroic_bin: Optional[str] = self._detect_heroic()
         self._lutris_bin: Optional[str] = self._detect_lutris()
 
@@ -29,6 +29,7 @@ class GameScanner:
 
     def _detect_lutris(self) -> Optional[str]:
         import shutil
+
         if shutil.which("lutris"):
             return "lutris"
         flatpak_paths = [
@@ -50,6 +51,7 @@ class GameScanner:
 
     def _detect_heroic(self) -> Optional[str]:
         import shutil
+
         if shutil.which("heroic"):
             return "heroic"
         search_dirs = [
@@ -98,7 +100,7 @@ class GameScanner:
                 apps_match = re.search(r'"apps"\s*\{', content)
                 if not apps_match:
                     continue
-                apps_content = content[apps_match.end():]
+                apps_content = content[apps_match.end() :]
                 pos = 0
                 while pos < len(apps_content):
                     m = re.search(r'"(\d+)"\s*\{', apps_content[pos:])
@@ -109,37 +111,53 @@ class GameScanner:
                     depth = 1
                     p = block_start
                     while p < len(apps_content) and depth > 0:
-                        if apps_content[p] == '{':
+                        if apps_content[p] == "{":
                             depth += 1
-                        elif apps_content[p] == '}':
+                        elif apps_content[p] == "}":
                             depth -= 1
                         p += 1
-                    block = apps_content[block_start:p - 1]
+                    block = apps_content[block_start : p - 1]
                     pt = re.search(r'"Playtime"\s+"(\d+)"', block)
                     lp = re.search(r'"LastPlayed"\s+"(\d+)"', block)
                     if pt or lp:
                         result[appid] = {
                             "playtime_minutes": int(pt.group(1)) if pt else 0,
-                            "last_played":      int(lp.group(1)) if lp else 0,
+                            "last_played": int(lp.group(1)) if lp else 0,
                         }
                     pos = pos + m.start() + 1
-            except Exception:
-                pass
+            except (OSError, re.error) as e:
+                print(f"[scanners] failed to parse {cfg}: {e}", file=sys.stderr)
         return result
 
     def is_steam_tool(self, name: str) -> bool:
         tool_patterns = [
-            "proton", "steam linux runtime", "steamworks common", "steam runtime",
-            "redistributable", "sdk", "dedicated server", "tool", "hotfix",
-            "steamvr", "steam audio", "steam shader", "steam workshop",
-            "steam controller", "directx", "vcredist", "visual c++",
-            ".net framework", "microsoft visual", "steam play", "compatibility tool"
+            "proton",
+            "steam linux runtime",
+            "steamworks common",
+            "steam runtime",
+            "redistributable",
+            "sdk",
+            "dedicated server",
+            "tool",
+            "hotfix",
+            "steamvr",
+            "steam audio",
+            "steam shader",
+            "steam workshop",
+            "steam controller",
+            "directx",
+            "vcredist",
+            "visual c++",
+            ".net framework",
+            "microsoft visual",
+            "steam play",
+            "compatibility tool",
         ]
         return any(pattern in name.lower() for pattern in tool_patterns)
 
     def parse_acf_file(self, acf_path: Path) -> Optional[Dict[str, Any]]:
         try:
-            with open(acf_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(acf_path, "r", encoding="utf-8", errors="ignore") as f:
                 content = f.read()
 
             app_id_match = re.search(r'"appid"\s+"(\d+)"', content)
@@ -165,33 +183,44 @@ class GameScanner:
             last_updated = int(updated_match.group(1)) if updated_match else 0
 
             sgdb_config = self.config.get("steamgriddb", {})
-            sgdb_active = sgdb_config.get("enabled", False) and bool(sgdb_config.get("api_key", ""))
-            cdn_cover   = f"https://cdn.cloudflare.steamstatic.com/steam/apps/{app_id}/header.jpg"
-            cover_url   = "" if (sgdb_active and sgdb_config.get("parallel_requests", True)) else cdn_cover
+            sgdb_active = sgdb_config.get("enabled", False) and bool(
+                sgdb_config.get("api_key", "")
+            )
+            cdn_cover = (
+                f"https://cdn.cloudflare.steamstatic.com/steam/apps/{app_id}/header.jpg"
+            )
+            cover_url = (
+                ""
+                if (sgdb_active and sgdb_config.get("parallel_requests", True))
+                else cdn_cover
+            )
 
             return {
-                "name":             name,
-                "exec":             f"steam steam://rungameid/{app_id}",
-                "image":            cover_url,
-                "hero_image":       f"https://cdn.cloudflare.steamstatic.com/steam/apps/{app_id}/library_hero.jpg",
-                "category":         "steam",
-                "favorite":         False,
-                "appid":            app_id,
-                "last_played":      last_played,
+                "name": name,
+                "exec": f"steam steam://rungameid/{app_id}",
+                "image": cover_url,
+                "hero_image": f"https://cdn.cloudflare.steamstatic.com/steam/apps/{app_id}/library_hero.jpg",
+                "category": "steam",
+                "favorite": False,
+                "appid": app_id,
+                "last_played": last_played,
                 "playtime_minutes": 0,
-                "size_bytes":       size_bytes,
-                "last_updated":     last_updated,
-                "source":           "steam",
-                "logo":             ""
+                "size_bytes": size_bytes,
+                "last_updated": last_updated,
+                "source": "steam",
+                "logo": "",
             }
-        except Exception:
+        except Exception as e:
+            print(
+                f"[scanners] could not parse ACF {acf_path.name}: {e}", file=sys.stderr
+            )
             return None
 
     def scan_steam_library(self) -> List[Dict[str, Any]]:
         games = []
         if not self.config.get("steam", {}).get("enabled", True):
             return games
-        localconfig   = self.load_steam_localconfig()
+        localconfig = self.load_steam_localconfig()
         library_paths = self.config.get("steam", {}).get("library_paths", [])
         for lib_path in library_paths:
             lib_path = expand_path(lib_path)
@@ -201,7 +230,7 @@ class GameScanner:
                 game_data = self.parse_acf_file(acf_file)
                 if game_data:
                     appid = game_data.get("appid", "")
-                    lc    = localconfig.get(appid, {})
+                    lc = localconfig.get(appid, {})
                     game_data["playtime_minutes"] = lc.get("playtime_minutes", 0)
                     if game_data.get("last_played", 0) == 0:
                         game_data["last_played"] = lc.get("last_played", 0)
@@ -209,52 +238,55 @@ class GameScanner:
         return games
 
     def convert_appid_to_long(self, appid: int) -> int:
-        int32       = struct.Struct('<i')
-        bin_appid   = int32.pack(appid)
-        hex_appid   = binascii.hexlify(bin_appid).decode()
+        int32 = struct.Struct("<i")
+        bin_appid = int32.pack(appid)
+        hex_appid = binascii.hexlify(bin_appid).decode()
         reversed_hex = bytes.fromhex(hex_appid)[::-1].hex()
         return int(reversed_hex, 16) << 32 | 0x02000000
 
     def parse_vdf_shortcuts(self, file_path: Path) -> List[Dict[str, Any]]:
         games = []
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 shortcuts_data = vdf.binary_load(f)
-            for _, app in shortcuts_data.get('shortcuts', {}).items():
+            for _, app in shortcuts_data.get("shortcuts", {}).items():
                 game_data = self.process_shortcut_entry(app)
                 if game_data:
                     games.append(game_data)
-        except Exception:
-            pass
+        except Exception as e:
+            print(
+                f"[scanners] failed to parse shortcuts {file_path}: {e}",
+                file=sys.stderr,
+            )
         return games
 
     def process_shortcut_entry(self, app: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        name       = app.get('AppName', app.get('appname', 'Unknown'))
-        exe        = app.get('Exe', app.get('exe', ''))
-        icon       = app.get('icon', '')
-        appid      = app.get('appid', 0)
-        last_played = app.get('LastPlayTime', app.get('lastplaytime', 0))
+        name = app.get("AppName", app.get("appname", "Unknown"))
+        exe = app.get("Exe", app.get("exe", ""))
+        icon = app.get("icon", "")
+        appid = app.get("appid", 0)
+        last_played = app.get("LastPlayTime", app.get("lastplaytime", 0))
 
         if not name or not exe:
             return None
 
         long_appid = self.convert_appid_to_long(appid)
         return {
-            "name":        name,
-            "exec":        f"steam steam://rungameid/{long_appid}",
-            "image":       icon if icon else "",
-            "category":    "steam-shortcut",
-            "favorite":    False,
-            "appid":       str(long_appid),
+            "name": name,
+            "exec": f"steam steam://rungameid/{long_appid}",
+            "image": icon if icon else "",
+            "category": "steam-shortcut",
+            "favorite": False,
+            "appid": str(long_appid),
             "last_played": last_played,
-            "source":      "steam"
+            "source": "steam",
         }
 
     def scan_steam_shortcuts(self) -> List[Dict[str, Any]]:
         games = []
         if not self.config.get("steam", {}).get("enabled", True):
             return games
-        localconfig   = self.load_steam_localconfig()
+        localconfig = self.load_steam_localconfig()
         userdata_path = expand_path("~/.local/share/Steam") / "userdata"
         if not userdata_path.exists():
             return games
@@ -265,7 +297,7 @@ class GameScanner:
                     shortcut_games = self.parse_vdf_shortcuts(shortcuts_file)
                     for g in shortcut_games:
                         appid = g.get("appid", "")
-                        lc    = localconfig.get(str(appid), {})
+                        lc = localconfig.get(str(appid), {})
                         if lc.get("playtime_minutes", 0) > 0:
                             g["playtime_minutes"] = lc["playtime_minutes"]
                         if g.get("last_played", 0) == 0:
@@ -293,29 +325,33 @@ class GameScanner:
 
     def parse_desktop_file(self, desktop_path: Path) -> Optional[Dict[str, Any]]:
         try:
-            with open(desktop_path, 'r', encoding='utf-8') as f:
+            with open(desktop_path, "r", encoding="utf-8") as f:
                 content = f.read()
             if "Categories=" not in content or "Game" not in content:
                 return None
-            name_match = re.search(r'^Name=(.+)$', content, re.MULTILINE)
+            name_match = re.search(r"^Name=(.+)$", content, re.MULTILINE)
             if not name_match:
                 return None
-            exec_match = re.search(r'^Exec=(.+)$', content, re.MULTILINE)
+            exec_match = re.search(r"^Exec=(.+)$", content, re.MULTILINE)
             if not exec_match:
                 return None
-            icon_match  = re.search(r'^Icon=(.+)$', content, re.MULTILINE)
-            icon        = icon_match.group(1) if icon_match else ""
-            image_path  = self.resolve_icon_path(icon) if icon else ""
+            icon_match = re.search(r"^Icon=(.+)$", content, re.MULTILINE)
+            icon = icon_match.group(1) if icon_match else ""
+            image_path = self.resolve_icon_path(icon) if icon else ""
             return {
-                "name":        name_match.group(1),
-                "exec":        exec_match.group(1),
-                "image":       image_path,
-                "category":    "desktop",
-                "favorite":    False,
-                "source":      "desktop",
-                "last_played": 0
+                "name": name_match.group(1),
+                "exec": exec_match.group(1),
+                "image": image_path,
+                "category": "desktop",
+                "favorite": False,
+                "source": "desktop",
+                "last_played": 0,
             }
-        except Exception:
+        except Exception as e:
+            print(
+                f"[scanners] could not parse desktop file {desktop_path.name}: {e}",
+                file=sys.stderr,
+            )
             return None
 
     def resolve_icon_path(self, icon: str) -> str:
@@ -346,12 +382,12 @@ class GameScanner:
         if not self.config.get("heroic", {}).get("enabled", True):
             return games
 
-        config_paths  = self.config.get("heroic", {}).get("config_paths", [])
-        scan_epic     = self.config.get("heroic", {}).get("scan_epic", True)
-        scan_gog      = self.config.get("heroic", {}).get("scan_gog", True)
-        scan_amazon   = self.config.get("heroic", {}).get("scan_amazon", True)
+        config_paths = self.config.get("heroic", {}).get("config_paths", [])
+        scan_epic = self.config.get("heroic", {}).get("scan_epic", True)
+        scan_gog = self.config.get("heroic", {}).get("scan_gog", True)
+        scan_amazon = self.config.get("heroic", {}).get("scan_amazon", True)
         scan_sideload = self.config.get("heroic", {}).get("scan_sideload", True)
-        use_parallel  = self.config.get("steamgriddb", {}).get("parallel_requests", True)
+        use_parallel = self.config.get("steamgriddb", {}).get("parallel_requests", True)
 
         for config_path in config_paths:
             heroic_path = expand_path(config_path)
@@ -367,16 +403,18 @@ class GameScanner:
                 stores.append(("nile_config", "amazon"))
 
             for store_dir, runner in stores:
-                library_path   = heroic_path / "store_cache" / store_dir / "library.json"
-                installed_path = heroic_path / "store_cache" / store_dir / "installed.json"
+                library_path = heroic_path / "store_cache" / store_dir / "library.json"
+                installed_path = (
+                    heroic_path / "store_cache" / store_dir / "installed.json"
+                )
                 if not library_path.exists():
                     continue
                 try:
-                    with open(library_path, 'r') as f:
+                    with open(library_path, "r") as f:
                         data = json.load(f)
                     installed_games = set()
                     if installed_path.exists():
-                        with open(installed_path, 'r') as f:
+                        with open(installed_path, "r") as f:
                             installed_data = json.load(f)
                             installed_games = {
                                 g.get("app_name", "")
@@ -387,54 +425,67 @@ class GameScanner:
                         if app_name not in installed_games:
                             continue
                         title = game.get("title", "Unknown")
-                        art   = game.get("art_cover", game.get("art_square", ""))
+                        art = game.get("art_cover", game.get("art_square", ""))
                         if use_parallel or self.sgdb is None:
                             cover_url = art
                         else:
-                            cover_url = self.sgdb.get_heroic_cover_url(app_name, runner, art)
-                        games.append({
-                            "name":        title,
-                            "exec":        self.get_heroic_exec(runner, app_name),
-                            "image":       cover_url,
-                            "category":    runner,
-                            "favorite":    False,
-                            "source":      runner,
-                            "last_played": 0,
-                            "appid":       app_name,
-                            "logo":        ""
-                        })
-                except Exception:
-                    pass
+                            cover_url = self.sgdb.get_heroic_cover_url(
+                                app_name, runner, art
+                            )
+                        games.append(
+                            {
+                                "name": title,
+                                "exec": self.get_heroic_exec(runner, app_name),
+                                "image": cover_url,
+                                "category": runner,
+                                "favorite": False,
+                                "source": runner,
+                                "last_played": 0,
+                                "appid": app_name,
+                                "logo": "",
+                            }
+                        )
+                except Exception as e:
+                    print(
+                        f"[scanners] heroic store {store_dir} failed: {e}",
+                        file=sys.stderr,
+                    )
 
             if scan_sideload:
                 sideload_path = heroic_path / "sideload_apps" / "library.json"
                 if sideload_path.exists():
                     try:
-                        with open(sideload_path, 'r') as f:
+                        with open(sideload_path, "r") as f:
                             data = json.load(f)
                         for game in data.get("games", []):
                             if not game.get("is_installed", False):
                                 continue
                             app_name = game.get("app_name", "")
-                            title    = game.get("title", "Unknown")
-                            art      = game.get("art_cover", game.get("art_square", ""))
+                            title = game.get("title", "Unknown")
+                            art = game.get("art_cover", game.get("art_square", ""))
                             if use_parallel or self.sgdb is None:
                                 cover_url = art
                             else:
-                                cover_url = self.sgdb.get_heroic_cover_url(app_name, "sideload", art)
-                            games.append({
-                                "name":        title,
-                                "exec":        self.get_heroic_exec("sideload", app_name),
-                                "image":       cover_url,
-                                "category":    "sideload",
-                                "favorite":    False,
-                                "source":      "heroic",
-                                "last_played": 0,
-                                "appid":       app_name,
-                                "logo":        ""
-                            })
-                    except Exception:
-                        pass
+                                cover_url = self.sgdb.get_heroic_cover_url(
+                                    app_name, "sideload", art
+                                )
+                            games.append(
+                                {
+                                    "name": title,
+                                    "exec": self.get_heroic_exec("sideload", app_name),
+                                    "image": cover_url,
+                                    "category": "sideload",
+                                    "favorite": False,
+                                    "source": "heroic",
+                                    "last_played": 0,
+                                    "appid": app_name,
+                                    "logo": "",
+                                }
+                            )
+                    except Exception as e:
+                        print(
+                            f"[scanners] heroic sideload failed: {e}", file=sys.stderr
+                        )
 
         return games
 
@@ -470,7 +521,7 @@ class GameScanner:
             name = row["name"] or ""
             if not name:
                 continue
-            slug    = row["slug"] or ""
+            slug = row["slug"] or ""
             game_id = row["id"]
             image_path = ""
             for ext in ("jpg", "jpeg", "png"):
@@ -478,16 +529,18 @@ class GameScanner:
                 if candidate.exists():
                     image_path = str(candidate)
                     break
-            games.append({
-                "name":        name,
-                "exec":        self.get_lutris_exec(game_id),
-                "image":       image_path,
-                "category":    "lutris",
-                "favorite":    False,
-                "source":      "lutris",
-                "last_played": row["lastplayed"] or 0,
-                "appid":       str(game_id),
-                "logo":        "",
-            })
+            games.append(
+                {
+                    "name": name,
+                    "exec": self.get_lutris_exec(game_id),
+                    "image": image_path,
+                    "category": "lutris",
+                    "favorite": False,
+                    "source": "lutris",
+                    "last_played": row["lastplayed"] or 0,
+                    "appid": str(game_id),
+                    "logo": "",
+                }
+            )
 
         return games

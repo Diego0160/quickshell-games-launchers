@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import re
+import sys
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -19,19 +20,20 @@ class SGDBClient:
 
     def _check_connectivity(self, timeout: int = 2) -> bool:
         import socket
+
         try:
             socket.setdefaulttimeout(timeout)
             socket.gethostbyname("www.steamgriddb.com")
             return True
-        except Exception:
+        except OSError:
             return False
 
     def check_url_exists(self, url: str, timeout: int = 2) -> bool:
         try:
-            request = urllib.request.Request(url, method='HEAD')
+            request = urllib.request.Request(url, method="HEAD")
             with urllib.request.urlopen(request, timeout=timeout) as response:
                 return response.status == 200
-        except Exception:
+        except OSError:
             return False
 
     # ── CDN Steam ──────────────────────────────────────────────────────────
@@ -74,18 +76,29 @@ class SGDBClient:
 
     def get_steamgriddb_platform(self, source: str, category: str) -> str:
         platform_map = {
-            "steam": "steam", "epic": "egs", "gog": "gog",
-            "amazon": "amazon", "uplay": "uplay", "origin": "origin",
-            "battlenet": "bnet", "sideload": "steam",
+            "steam": "steam",
+            "epic": "egs",
+            "gog": "gog",
+            "amazon": "amazon",
+            "uplay": "uplay",
+            "origin": "origin",
+            "battlenet": "bnet",
+            "sideload": "steam",
         }
-        return platform_map.get(source.lower()) or platform_map.get(category.lower()) or "steam"
+        return (
+            platform_map.get(source.lower())
+            or platform_map.get(category.lower())
+            or "steam"
+        )
 
-    def _search_sgdb_id_by_name(self, game_name: str, api_key: str, timeout: int) -> Optional[int]:
+    def _search_sgdb_id_by_name(
+        self, game_name: str, api_key: str, timeout: int
+    ) -> Optional[int]:
         import urllib.parse
 
         def word_set(name):
-            cleaned = re.sub(r'[™®©]', '', name)
-            return set(re.sub(r'[_\-:]+', ' ', cleaned).lower().split())
+            cleaned = re.sub(r"[™®©]", "", name)
+            return set(re.sub(r"[_\-:]+", " ", cleaned).lower().split())
 
         game_words = word_set(game_name)
         if not game_words:
@@ -105,14 +118,19 @@ class SGDBClient:
                         sgdb_words = word_set(result.get("name", ""))
                         if game_words and game_words.issubset(sgdb_words):
                             return result["id"]
-        except Exception:
-            pass
+        except (urllib.error.URLError, json.JSONDecodeError) as e:
+            print(f"[sgdb] search by name failed: {e}", file=sys.stderr)
         return None
 
     # ── Cover ──────────────────────────────────────────────────────────────
 
-    def get_steamgriddb_cover_url(self, app_id: str, platform: str = "steam",
-                                   game_name: str = "", prefer_animated: Optional[bool] = None) -> Optional[str]:
+    def get_steamgriddb_cover_url(
+        self,
+        app_id: str,
+        platform: str = "steam",
+        game_name: str = "",
+        prefer_animated: Optional[bool] = None,
+    ) -> Optional[str]:
         sgdb_config = self.config.get("steamgriddb", {})
         if not sgdb_config.get("enabled", False):
             return None
@@ -124,13 +142,20 @@ class SGDBClient:
             prefer_animated = sgdb_config.get("prefer_animated", False)
 
         anim_suffix = "animated" if prefer_animated else "static"
-        cache_key = f"{platform}:{app_id}:{sgdb_config.get('image_type', 'grid')}:{anim_suffix}"
+        cache_key = (
+            f"{platform}:{app_id}:{sgdb_config.get('image_type', 'grid')}:{anim_suffix}"
+        )
         cached_url = self.image_cache.get(cache_key)
         if cached_url is not None:
             return self._local_or_url(cached_url) if cached_url else None
 
         image_type = sgdb_config.get("image_type", "grid")
-        endpoint_map = {"grid": "grids", "hero": "heroes", "logo": "logos", "icon": "icons"}
+        endpoint_map = {
+            "grid": "grids",
+            "hero": "heroes",
+            "logo": "logos",
+            "icon": "icons",
+        }
         endpoint = endpoint_map.get(image_type, "grids")
 
         def score_image(img):
@@ -148,7 +173,9 @@ class SGDBClient:
             images = [img for img in images if img.get("width", 0) >= 300]
             min_likes = sgdb_config.get("min_likes", 0)
             if min_likes > 0:
-                filtered = [img for img in images if (img.get("likes") or 0) >= min_likes]
+                filtered = [
+                    img for img in images if (img.get("likes") or 0) >= min_likes
+                ]
                 if filtered:
                     images = filtered
             return images
@@ -161,7 +188,7 @@ class SGDBClient:
             return [str(v).strip() for v in val if str(v).strip()]
 
         dimensions = normalize(sgdb_config.get("dimensions"))
-        styles     = normalize(sgdb_config.get("styles"))
+        styles = normalize(sgdb_config.get("styles"))
         base_flags = []
         if dimensions:
             base_flags.append(f"dimensions={','.join(dimensions)}")
@@ -172,7 +199,7 @@ class SGDBClient:
         base_flags.append(f"epilepsy={str(sgdb_config.get('epilepsy', False)).lower()}")
 
         base_url = f"https://www.steamgriddb.com/api/v2/{endpoint}/{platform}/{app_id}"
-        timeout  = sgdb_config.get("request_timeout", 3)
+        timeout = sgdb_config.get("request_timeout", 3)
 
         def make_url(types_val, with_dims=True, mimes_val=None, url_base=None):
             p = [f"types={types_val}"]
@@ -194,8 +221,10 @@ class SGDBClient:
             except urllib.error.HTTPError as e:
                 if e.code == 404:
                     self.image_cache.set(cache_key, "")
-            except Exception:
-                pass
+                else:
+                    print(f"[sgdb] HTTP {e.code} on {url}", file=sys.stderr)
+            except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as e:
+                print(f"[sgdb] request failed: {e}", file=sys.stderr)
             return None
 
         def best_image(raw_images, prefer_webm=False):
@@ -231,18 +260,38 @@ class SGDBClient:
         if game_name:
             sgdb_id = self._search_sgdb_id_by_name(game_name, api_key, timeout)
             if sgdb_id:
-                name_base = f"https://www.steamgriddb.com/api/v2/{endpoint}/game/{sgdb_id}"
+                name_base = (
+                    f"https://www.steamgriddb.com/api/v2/{endpoint}/game/{sgdb_id}"
+                )
                 if prefer_animated:
-                    raw = do_request(make_url("animated", with_dims=True, url_base=name_base))
+                    raw = do_request(
+                        make_url("animated", with_dims=True, url_base=name_base)
+                    )
                     if raw is None and dimensions:
-                        raw = do_request(make_url("animated", with_dims=False, url_base=name_base))
+                        raw = do_request(
+                            make_url("animated", with_dims=False, url_base=name_base)
+                        )
                     image_url = best_image(raw, prefer_webm=False)
                     if image_url:
                         self.image_cache.set(cache_key, image_url)
                         return self._local_or_url(image_url)
-                raw = do_request(make_url("static", with_dims=True, mimes_val="image/png", url_base=name_base))
+                raw = do_request(
+                    make_url(
+                        "static",
+                        with_dims=True,
+                        mimes_val="image/png",
+                        url_base=name_base,
+                    )
+                )
                 if raw is None and dimensions:
-                    raw = do_request(make_url("static", with_dims=False, mimes_val="image/png", url_base=name_base))
+                    raw = do_request(
+                        make_url(
+                            "static",
+                            with_dims=False,
+                            mimes_val="image/png",
+                            url_base=name_base,
+                        )
+                    )
                 image_url = best_image(raw, prefer_webm=False)
                 if image_url:
                     self.image_cache.set(cache_key, image_url)
@@ -253,7 +302,9 @@ class SGDBClient:
 
     # ── Logo ───────────────────────────────────────────────────────────────
 
-    def get_steamgriddb_logo_url(self, app_id: str, platform: str = "steam", game_name: str = "") -> Optional[str]:
+    def get_steamgriddb_logo_url(
+        self, app_id: str, platform: str = "steam", game_name: str = ""
+    ) -> Optional[str]:
         sgdb_config = self.config.get("steamgriddb", {})
         if not sgdb_config.get("enabled", False):
             return None
@@ -285,8 +336,8 @@ class SGDBClient:
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 self.image_cache.set(cache_key, "")
-        except Exception:
-            pass
+        except (urllib.error.URLError, json.JSONDecodeError) as e:
+            print(f"[sgdb] name fallback failed: {e}", file=sys.stderr)
 
         if game_name:
             sgdb_id = self._search_sgdb_id_by_name(game_name, api_key, timeout)
@@ -300,11 +351,13 @@ class SGDBClient:
                     with urllib.request.urlopen(req2, timeout=timeout) as r2:
                         d2 = json.loads(r2.read().decode())
                         if d2.get("success") and d2.get("data"):
-                            logo_url = d2["data"][0].get("url", d2["data"][0].get("thumb"))
+                            logo_url = d2["data"][0].get(
+                                "url", d2["data"][0].get("thumb")
+                            )
                             self.image_cache.set(cache_key, logo_url)
                             return self._local_or_url(logo_url)
-                except Exception:
-                    pass
+                except (urllib.error.URLError, json.JSONDecodeError) as e:
+                    print(f"[sgdb] logo name fallback failed: {e}", file=sys.stderr)
 
         self.image_cache.set(cache_key, "")
         return None
@@ -316,19 +369,26 @@ class SGDBClient:
         if sgdb_url:
             return sgdb_url
         sgdb_config = self.config.get("steamgriddb", {})
-        if sgdb_config.get("enabled", False) and not sgdb_config.get("fallback_to_steam", True):
+        if sgdb_config.get("enabled", False) and not sgdb_config.get(
+            "fallback_to_steam", True
+        ):
             return ""
         return self.get_steam_cdn_fallback_url(app_id)
 
-    def get_heroic_cover_url(self, app_id: str, source: str, art_url: str = "", game_name: str = "") -> str:
+    def get_heroic_cover_url(
+        self, app_id: str, source: str, art_url: str = "", game_name: str = ""
+    ) -> str:
         platform = self.get_steamgriddb_platform(source, source)
-        sgdb_url = self.get_steamgriddb_cover_url(app_id, platform=platform, game_name=game_name)
+        sgdb_url = self.get_steamgriddb_cover_url(
+            app_id, platform=platform, game_name=game_name
+        )
         return sgdb_url if sgdb_url else art_url
 
     # ── Slideshow ──────────────────────────────────────────────────────────
 
-    def get_steamgriddb_slideshow_urls(self, app_id: str, platform: str = "steam",
-                                       game_name: str = "", n: int = 3) -> List[str]:
+    def get_steamgriddb_slideshow_urls(
+        self, app_id: str, platform: str = "steam", game_name: str = "", n: int = 3
+    ) -> List[str]:
         """Returns top N static image URLs for BigPicture hero slideshow."""
         sgdb_config = self.config.get("steamgriddb", {})
         if not sgdb_config.get("enabled", False):
@@ -338,7 +398,12 @@ class SGDBClient:
             return []
 
         image_type = sgdb_config.get("image_type", "grid")
-        endpoint_map = {"grid": "grids", "hero": "heroes", "logo": "logos", "icon": "icons"}
+        endpoint_map = {
+            "grid": "grids",
+            "hero": "heroes",
+            "logo": "logos",
+            "icon": "icons",
+        }
         endpoint = endpoint_map.get(image_type, "grids")
 
         cache_key = f"{platform}:{app_id}:{image_type}:slideshow"
@@ -374,8 +439,8 @@ class SGDBClient:
                     data = json.loads(resp.read().decode())
                     if data.get("success") and data.get("data"):
                         return data["data"]
-            except Exception:
-                pass
+            except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as e:
+                print(f"[sgdb] request failed: {e}", file=sys.stderr)
             return None
 
         def top_images(raw, count):
@@ -383,8 +448,11 @@ class SGDBClient:
                 return []
             imgs = [img for img in raw if img.get("width", 0) >= 300]
             imgs = sorted(imgs, key=score_image, reverse=True)
-            return [img.get("url") or img.get("thumb")
-                    for img in imgs[:count] if img.get("url") or img.get("thumb")]
+            return [
+                img.get("url") or img.get("thumb")
+                for img in imgs[:count]
+                if img.get("url") or img.get("thumb")
+            ]
 
         query = "?types=static&mimes=image/png&nsfw=false&humor=false&epilepsy=false"
         raw = do_request(base_url + query)
@@ -393,7 +461,9 @@ class SGDBClient:
         if not urls and game_name:
             sgdb_id = self._search_sgdb_id_by_name(game_name, api_key, timeout)
             if sgdb_id:
-                name_base = f"https://www.steamgriddb.com/api/v2/{endpoint}/game/{sgdb_id}"
+                name_base = (
+                    f"https://www.steamgriddb.com/api/v2/{endpoint}/game/{sgdb_id}"
+                )
                 raw = do_request(name_base + query)
                 urls = top_images(raw, n)
 
@@ -402,23 +472,36 @@ class SGDBClient:
 
     # ── Fetch parallèle ────────────────────────────────────────────────────
 
-    def fetch_images_parallel(self, games: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def fetch_images_parallel(
+        self, games: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         sgdb_config = self.config.get("steamgriddb", {})
-        if not sgdb_config.get("enabled", False) or not sgdb_config.get("parallel_requests", True):
+        if not sgdb_config.get("enabled", False) or not sgdb_config.get(
+            "parallel_requests", True
+        ):
             return games
 
-        max_workers    = sgdb_config.get("max_workers", 10)
+        max_workers = sgdb_config.get("max_workers", 10)
         prefer_animated = sgdb_config.get("prefer_animated", False)
 
         games_to_fetch = []
         for i, game in enumerate(games):
-            source   = game.get("source", "")
+            source = game.get("source", "")
             category = game.get("category", "")
-            image    = game.get("image", "")
-            valid_source = source in ["steam", "epic", "gog", "amazon", "heroic", "sideload"]
-            is_shortcut  = category == "steam-shortcut"
-            is_sideload  = category == "sideload" or source in ["heroic", "sideload"]
-            needs_fetch  = not image or "steamstatic.com" in image or is_shortcut or is_sideload
+            image = game.get("image", "")
+            valid_source = source in [
+                "steam",
+                "epic",
+                "gog",
+                "amazon",
+                "heroic",
+                "sideload",
+            ]
+            is_shortcut = category == "steam-shortcut"
+            is_sideload = category == "sideload" or source in ["heroic", "sideload"]
+            needs_fetch = (
+                not image or "steamstatic.com" in image or is_shortcut or is_sideload
+            )
             if valid_source and game.get("appid") and needs_fetch:
                 games_to_fetch.append((i, game))
 
@@ -430,32 +513,48 @@ class SGDBClient:
 
         def fetch_all(item):
             idx, game = item
-            platform  = self.get_steamgriddb_platform(game.get("source", ""), game.get("category", ""))
-            appid     = game.get("appid")
-            name      = game.get("name", "")
+            platform = self.get_steamgriddb_platform(
+                game.get("source", ""), game.get("category", "")
+            )
+            appid = game.get("appid")
+            name = game.get("name", "")
 
             # Toujours récupérer la version statique
-            static_url = self.get_steamgriddb_cover_url(appid, platform, game_name=name, prefer_animated=False)
-            if not static_url and game.get("source") == "steam" and game.get("category") != "steam-shortcut":
+            static_url = self.get_steamgriddb_cover_url(
+                appid, platform, game_name=name, prefer_animated=False
+            )
+            if (
+                not static_url
+                and game.get("source") == "steam"
+                and game.get("category") != "steam-shortcut"
+            ):
                 static_url = self.get_steam_cdn_fallback_url(appid)
 
             # Version animée séparée si activée
             animated_url = None
             if prefer_animated:
-                animated_url = self.get_steamgriddb_cover_url(appid, platform, game_name=name, prefer_animated=True)
+                animated_url = self.get_steamgriddb_cover_url(
+                    appid, platform, game_name=name, prefer_animated=True
+                )
                 # Si l'animée est identique à la statique (pas d'animée dispo), on la vide
                 if animated_url and animated_url == static_url:
                     animated_url = None
 
             logo_url = self.get_steamgriddb_logo_url(appid, platform, game_name=name)
-            slideshow_urls = self.get_steamgriddb_slideshow_urls(appid, platform, game_name=name, n=3)
+            slideshow_urls = self.get_steamgriddb_slideshow_urls(
+                appid, platform, game_name=name, n=3
+            )
             return idx, static_url, animated_url, logo_url, slideshow_urls
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(fetch_all, item): item for item in games_to_fetch}
+            futures = {
+                executor.submit(fetch_all, item): item for item in games_to_fetch
+            }
             for future in as_completed(futures):
                 try:
-                    idx, static_url, animated_url, logo_url, slideshow_urls = future.result()
+                    idx, static_url, animated_url, logo_url, slideshow_urls = (
+                        future.result()
+                    )
                     if static_url:
                         games[idx]["image"] = static_url
                     if animated_url:
@@ -464,7 +563,13 @@ class SGDBClient:
                         games[idx]["logo"] = logo_url
                     if slideshow_urls:
                         games[idx]["images"] = slideshow_urls
-                except Exception:
-                    pass
+                except Exception as e:
+                    game_name = (
+                        games[idx].get("name", "?") if 0 <= idx < len(games) else "?"
+                    )
+                    print(
+                        f"[sgdb] image fetch failed for {game_name}: {e}",
+                        file=sys.stderr,
+                    )
 
         return games
