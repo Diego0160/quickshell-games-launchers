@@ -28,7 +28,7 @@ Rectangle {
     property int spacing: config?.display?.spacing ?? 20
 
     property int sidebarWidth: 68
-    property bool bigPictureMode: false
+    property bool bigPictureMode: config?.behavior?.start_in_bigpicture ?? false
     property int screenW: 1920
     property int screenH: 1080
     property int favoriteCount: {
@@ -179,6 +179,7 @@ Rectangle {
     }
 
     signal closeRequested()
+    signal openConfigRequested()
 
     Process {
         id: gamesProcess
@@ -676,6 +677,33 @@ Rectangle {
                     }
                 }
             }
+
+            // Settings button — bottom-right of sidebar
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                anchors.bottomMargin: 8
+                anchors.rightMargin: 8
+                width: 32; height: 32; radius: 10
+                color: gearMouse.containsMouse ? Qt.rgba(1,1,1,0.12) : "transparent"
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Text {
+                    anchors.centerIn: parent
+                    text: "\uf013"
+                    font.family: "Font Awesome 7 Free Solid"
+                    font.pixelSize: 15
+                    color: colors.foreground || "#ffffff"
+                    opacity: gearMouse.containsMouse ? 0.85 : 0.35
+                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                }
+                MouseArea {
+                    id: gearMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: launcher.openConfigRequested()
+                }
+            }
         }
         // ── FIN SIDEBAR ──────────────────────────────────────────────────────
 
@@ -1026,6 +1054,7 @@ Rectangle {
             launcher.bigPictureMode = false
             launcher.forceActiveFocus()
         }
+        onOpenConfigRequested: launcher.openConfigRequested()
         onLaunchRequested: (game) => launchGame(game, null)
         onFavoriteToggleRequested: (game) => toggleFavorite(game)
         onSourceSelected: (src) => { launcher.selectedSource = src }

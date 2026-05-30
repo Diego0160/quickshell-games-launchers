@@ -33,6 +33,7 @@ ShellRoot {
     })
 
     property bool launcherVisible: true  // Visible for testing - TODO: add IPC toggle
+    property bool configPanelVisible: false
 
     // Load config from backend
     Process {
@@ -139,7 +140,47 @@ ShellRoot {
                     Behavior on opacity { NumberAnimation { duration: root.config.animations.duration_ms; easing.type: Easing.OutCubic } }
 
                     onCloseRequested: root.launcherVisible = false
+                    onOpenConfigRequested: {
+                        root.configPanelVisible = true
+                        configPanel.forceActiveFocus()
+                    }
                 }  // End GameLauncher
+
+                // Config panel overlay — centered on screen
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#000000"
+                    opacity: root.configPanelVisible ? 0.45 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: 180 } }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            root.configPanelVisible = false
+                            launcher.forceActiveFocus()
+                        }
+                    }
+                }
+
+                ConfigPanel {
+                    id: configPanel
+                    anchors.centerIn: parent
+                    config: root.config
+                    colors: launcher.colors
+                    visible: root.configPanelVisible
+                    opacity: root.configPanelVisible ? 1.0 : 0.0
+                    scale:   root.configPanelVisible ? 1.0 : 0.93
+                    Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                    Behavior on scale   { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                    onCloseRequested: {
+                        root.configPanelVisible = false
+                        launcher.forceActiveFocus()
+                    }
+                    onConfigSaved: (newConfig) => {
+                        root.config = newConfig
+                        root.configPanelVisible = false
+                    }
+                }
             }  // End rootItem
         }  // End PanelWindow
     }  // End Variants

@@ -1,24 +1,38 @@
 #!/usr/bin/env python3
 """Write config changes back to config.toml preserving comments (requires tomlkit)."""
-import sys, json
+
+import json
+import sys
 from pathlib import Path
+
 
 def find_config():
     p = Path(__file__).parents[2] / "config.toml"
     return p if p.exists() else None
 
+
 def main():
     try:
         import tomlkit
     except ImportError:
-        print(json.dumps({"ok": False, "error": "tomlkit not installed — run: pip install tomlkit"}), flush=True)
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "error": "tomlkit not installed — run: pip install tomlkit",
+                }
+            ),
+            flush=True,
+        )
         sys.exit(1)
 
     try:
         payload = json.loads(sys.argv[1] if len(sys.argv) > 1 else sys.stdin.read())
         path = find_config()
         if not path:
-            print(json.dumps({"ok": False, "error": "config.toml not found"}), flush=True)
+            print(
+                json.dumps({"ok": False, "error": "config.toml not found"}), flush=True
+            )
             sys.exit(1)
 
         with open(path) as f:
@@ -39,6 +53,7 @@ def main():
     except Exception as e:
         print(json.dumps({"ok": False, "error": str(e)}), flush=True)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
