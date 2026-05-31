@@ -593,6 +593,11 @@ Rectangle {
             onActiveFocusChanged: {
                 ctRoot.color        = activeFocus ? Qt.rgba(1,1,1,0.10) : Qt.rgba(1,1,1,0.07)
                 ctRoot.border.color = activeFocus ? panel.accent : Qt.rgba(1,1,1,0.15)
+                if (!activeFocus && text !== ctRoot.value) {
+                    ctRoot.value = text
+                    panel.hasChanges = true
+                    ctRoot.changed(ctRoot.value)
+                }
             }
             onEditingFinished: {
                 if (text !== ctRoot.value) {
