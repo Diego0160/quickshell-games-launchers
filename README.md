@@ -548,6 +548,6 @@ Inspired by [caelestia-dots/shell](https://github.com/caelestia-dots/shell)
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/waxdred)
 
-**Author** · Florian &nbsp;·&nbsp; **Version** · 1.3.0 &nbsp;·&nbsp; **Date** · 2026-05-31
+**Author** · Florian &nbsp;·&nbsp; **Version** · 2.0.0 &nbsp;·&nbsp; **Date** · 2026-05-31
 
 </div>
