@@ -51,7 +51,7 @@ https://github.com/user-attachments/assets/703e48dd-86d1-49cb-8bc8-1fe45b89e9f5
 - ⚙️ **In-app config panel** — live settings editor with 9 sections, no restart needed
 - 🎨 **Wallust / pywal** theming — auto accent colors from your wallpaper
 - 🎨 **Matugen** theming — Material You palette, mutually exclusive with wallust
-- 🌍 **i18n** — auto-detected language: fr / en / es / ru / ja
+- 🌍 **i18n** — auto-detected language: 🇫🇷 🇬🇧 🇪🇸 🇷🇺 🇯🇵
 - ⭐ Favorites, 🆕 NEW/RECENT badges, 🔍 live search
 - ⌨️ Keyboard, scroll wheel, and gamepad navigation
 
@@ -73,11 +73,19 @@ https://github.com/user-attachments/assets/703e48dd-86d1-49cb-8bc8-1fe45b89e9f5
 
 ## 📺 Big Picture Mode
 
+![Big Picture Mode](Readme/asset/Bigmode.png)
+
 Full-screen Steam Deck-style interface:
 - **Hero image** — wide banner (from Steam CDN or SteamGridDB)
 - **Stats panel** — playtime, last session, install size, last update
 - **Game strip** — scrollable list at the bottom
 - **Launch overlay** — logo + "Start Game◦◦◦" animation
+
+## ⚙️ Config Panel
+
+![Config Panel](Readme/asset/Setting.png)
+
+Live settings editor — 9 sections, changes apply without restarting Quickshell.
 
 ## 🎮 Gamepad
 
@@ -547,6 +555,8 @@ Inspired by [caelestia-dots/shell](https://github.com/caelestia-dots/shell)
 <div align="center">
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/waxdred)
+&nbsp;&nbsp;
+[![Reddit](https://img.shields.io/badge/Reddit-Embarrassed--Ad2725-FF4500?style=for-the-badge&logo=reddit&logoColor=white&labelColor=302D41)](https://www.reddit.com/user/Embarrassed-Ad2725/)
 
 **Author** · Florian &nbsp;·&nbsp; **Version** · 2.0.0 &nbsp;·&nbsp; **Date** · 2026-05-31
 
