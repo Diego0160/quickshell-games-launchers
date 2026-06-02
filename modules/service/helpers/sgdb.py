@@ -496,13 +496,17 @@ class SGDBClient:
                 "amazon",
                 "heroic",
                 "sideload",
+                "lutris",
+                "manual",
+                "config",
             ]
             is_shortcut = category == "steam-shortcut"
             is_sideload = category == "sideload" or source in ["heroic", "sideload"]
             needs_fetch = (
                 not image or "steamstatic.com" in image or is_shortcut or is_sideload
             )
-            if valid_source and game.get("appid") and needs_fetch:
+            has_id = game.get("appid") or source in ["lutris", "manual", "config"]
+            if valid_source and has_id and needs_fetch:
                 games_to_fetch.append((i, game))
 
         if not games_to_fetch:

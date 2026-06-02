@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Library path textarea (CfgArea) now saves edits correctly
 - Close launcher on click outside the dim overlay (was broken syntax)
 - Flash of default config on startup suppressed (`configLoaded` gate)
+- SteamGridDB covers now fetched for Lutris and manual games (name-search fallback)
 
 ### Changed
 - Config writes back to TOML preserving comments (`tomlkit`)
