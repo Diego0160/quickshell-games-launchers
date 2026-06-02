@@ -406,22 +406,6 @@ matugen image /path/to/wallpaper.jpg --source-color-index 0
 matugen color hex "#7c3aed"
 ```
 
-#### Optional — Auto-run on wallpaper change (Hyprland + swww)
-
-Add to your `hyprland.conf`:
-```conf
-exec-once = swww-daemon
-```
-
-Create a wallpaper script `~/.config/hypr/set_wallpaper.sh`:
-```bash
-#!/bin/bash
-swww img "$1" --transition-type fade
-matugen image "$1" --source-color-index 0
-```
-
-Then bind it or call it from your dotfiles.
-
 ---
 
 ## 🚀 Usage
