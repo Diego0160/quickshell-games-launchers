@@ -77,10 +77,28 @@ Rectangle {
     property bool    eGamesOnly:           config?.filtering?.games_only ?? false
     property string  eExcludeCategories:   (config?.filtering?.exclude_categories ?? []).join(", ")
     property string  eExcludeKeywords:     (config?.filtering?.exclude_keywords   ?? []).join(", ")
+    // Manual entries
+    property var    eManualEntries: JSON.parse(JSON.stringify(config?.manual?.entries ?? []))
+    property string eBoxArtDir:     config?.manual?.box_art_dir ?? "~/.config/quickshell/game-launcher/box-art"
 
     property bool   hasChanges:   false
     property int    activeSection: 0
     property string saveError:    ""
+
+    function manualUpdateEntry(idx, key, val) {
+        var arr = JSON.parse(JSON.stringify(panel.eManualEntries))
+        if (arr[idx] !== undefined) { arr[idx][key] = val; panel.eManualEntries = arr; panel.hasChanges = true }
+    }
+    function manualAddEntry() {
+        var arr = JSON.parse(JSON.stringify(panel.eManualEntries))
+        arr.push({ title: "", launch_command: "", path_box_art: "" })
+        panel.eManualEntries = arr; panel.hasChanges = true
+    }
+    function manualRemoveEntry(idx) {
+        var arr = JSON.parse(JSON.stringify(panel.eManualEntries))
+        arr.splice(idx, 1)
+        panel.eManualEntries = arr; panel.hasChanges = true
+    }
 
     // ── Geometry ──────────────────────────────────────────────────────────────
     width: 760; height: 540
@@ -167,6 +185,9 @@ Rectangle {
                     nc.filtering.games_only          = panel.eGamesOnly
                     nc.filtering.exclude_categories  = panel.eExcludeCategories.split(",").map(s => s.trim()).filter(s => s.length > 0)
                     nc.filtering.exclude_keywords    = panel.eExcludeKeywords.split(",").map(s => s.trim()).filter(s => s.length > 0)
+                    if (!nc.manual) nc.manual = {}
+                    nc.manual.box_art_dir = panel.eBoxArtDir
+                    nc.manual.entries     = JSON.parse(JSON.stringify(panel.eManualEntries))
                     panel.configSaved(nc)
                 }
             } catch(e) { console.error("config save error:", e) }
@@ -211,6 +232,10 @@ Rectangle {
                 games_only: eGamesOnly,
                 exclude_categories: eExcludeCategories.split(",").map(s => s.trim()).filter(s => s.length > 0),
                 exclude_keywords:   eExcludeKeywords.split(",").map(s => s.trim()).filter(s => s.length > 0)
+            },
+            manual: {
+                box_art_dir: eBoxArtDir,
+                entries: eManualEntries
             }
         }
         const writerPath = Qt.resolvedUrl("service/config_writer.py").toString().replace("file://","")
@@ -266,6 +291,8 @@ Rectangle {
         eGamesOnly         = config?.filtering?.games_only          ?? false
         eExcludeCategories = (config?.filtering?.exclude_categories ?? []).join(", ")
         eExcludeKeywords   = (config?.filtering?.exclude_keywords   ?? []).join(", ")
+        eManualEntries     = JSON.parse(JSON.stringify(config?.manual?.entries ?? []))
+        eBoxArtDir         = config?.manual?.box_art_dir ?? "~/.config/quickshell/game-launcher/box-art"
         hasChanges = false
     }
 
@@ -280,6 +307,7 @@ Rectangle {
         { icon: "", label: i18n.t("cfg_sec_lutris"),     group: ""                           },
         { icon: "", label: i18n.t("cfg_sec_sgdb"),       group: i18n.t("cfg_grp_artwork")   },
         { icon: "", label: i18n.t("cfg_sec_filters"),    group: i18n.t("cfg_grp_filtering") },
+        { icon: "", label: i18n.t("cfg_sec_manual"),     group: ""                           },
     ]
 
     // ── Layout ────────────────────────────────────────────────────────────────
@@ -444,6 +472,7 @@ Rectangle {
                         case 6:  return lutrisComp
                         case 7:  return sgdbComp
                         case 8:  return filterComp
+                        case 9:  return manualComp
                         default: return displayComp
                         }
                     }
@@ -1182,6 +1211,148 @@ Rectangle {
             SRow { lbl: i18n.t("cfg_excl_keywords"); sub: i18n.t("cfg_excl_keywords_sub")
                 CfgText { value: panel.eExcludeKeywords; fieldWidth: 260
                     onChanged: v => panel.eExcludeKeywords = v
+                }
+            }
+        }
+    }
+
+    // ── Manual entries editor ─────────────────────────────────────────────────
+    component EntryField: Rectangle {
+        id: ef
+        property string placeholder: ""
+        property string fieldValue: ""
+        property int    entryIdx: -1
+        property string fieldKey: ""
+        signal committed(string v)
+        width: parent ? parent.width : 0; height: 32; radius: 8
+        color: efTf.activeFocus ? Qt.rgba(1,1,1,0.10) : Qt.rgba(1,1,1,0.07)
+        border.color: efTf.activeFocus ? panel.accent : Qt.rgba(1,1,1,0.15); border.width: 1
+        Behavior on color        { ColorAnimation { duration: 120 } }
+        Behavior on border.color { ColorAnimation { duration: 120 } }
+        TextField {
+            id: efTf
+            anchors.fill: parent; anchors.margins: 6
+            placeholderText: ef.placeholder; font.pixelSize: 12; color: panel.fg
+            background: Item {}; selectByMouse: true
+            Component.onCompleted: text = ef.fieldValue
+            Connections {
+                target: panel
+                function onEManualEntriesChanged() {
+                    if (!efTf.activeFocus)
+                        efTf.text = panel.eManualEntries[ef.entryIdx]?.[ef.fieldKey] ?? ""
+                }
+            }
+            function commit() {
+                const v = text
+                if (v !== (panel.eManualEntries[ef.entryIdx]?.[ef.fieldKey] ?? ""))
+                    panel.manualUpdateEntry(ef.entryIdx, ef.fieldKey, v)
+            }
+            onActiveFocusChanged: if (!activeFocus) commit()
+            onEditingFinished: { commit(); focus = false }
+            Keys.onEscapePressed: { text = ef.fieldValue; focus = false }
+        }
+    }
+
+    Component {
+        id: manualComp
+        Column {
+            width: parent ? parent.width : 0
+            topPadding: 4
+
+            // Box-art folder
+            SRow { lbl: i18n.t("cfg_manual_boxart_dir"); sub: i18n.t("cfg_manual_boxart_dir_sub")
+                CfgText { value: panel.eBoxArtDir; fieldWidth: 260
+                    onChanged: v => panel.eBoxArtDir = v
+                }
+            }
+
+            // Empty state
+            Item {
+                width: parent.width; height: 52
+                visible: panel.eManualEntries.length === 0
+                Text {
+                    anchors.centerIn: parent
+                    text: i18n.t("cfg_manual_empty")
+                    font.pixelSize: 12; color: Qt.rgba(1,1,1,0.25); font.italic: true
+                }
+            }
+
+            // Entry list
+            Repeater {
+                model: panel.eManualEntries.length
+                delegate: Item {
+                    id: entryDelegate
+                    property int entryIdx: index
+                    width: parent ? parent.width : 0
+                    height: entryInner.implicitHeight + 24
+
+                    Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Qt.rgba(1,1,1,0.05) }
+
+                    Column {
+                        id: entryInner
+                        anchors.left: parent.left; anchors.right: parent.right
+                        anchors.leftMargin: 24; anchors.rightMargin: 24
+                        anchors.top: parent.top; anchors.topMargin: 12
+                        spacing: 6
+
+                        // Title row + delete button
+                        RowLayout {
+                            width: parent.width; spacing: 8
+                            Text {
+                                text: (entryIdx + 1) + "."
+                                font.pixelSize: 12; font.bold: true; color: panel.accent
+                                Layout.preferredWidth: 18
+                            }
+                            EntryField {
+                                Layout.fillWidth: true
+                                placeholder: i18n.t("cfg_manual_title")
+                                fieldValue: panel.eManualEntries[entryIdx]?.title ?? ""
+                                entryIdx: entryDelegate.entryIdx; fieldKey: "title"
+                            }
+                            Rectangle {
+                                Layout.preferredWidth: 32; height: 32; radius: 8
+                                color: delHov.containsMouse ? Qt.rgba(1,0.2,0.2,0.22) : Qt.rgba(1,1,1,0.07)
+                                border.color: Qt.rgba(1,1,1,0.12); border.width: 1
+                                Behavior on color { ColorAnimation { duration: 100 } }
+                                Text { anchors.centerIn: parent; text: ""; font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 11; color: Qt.rgba(1,0.4,0.4,0.85) }
+                                MouseArea { id: delHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                    onClicked: panel.manualRemoveEntry(entryDelegate.entryIdx)
+                                }
+                            }
+                        }
+
+                        // Launch command
+                        EntryField {
+                            placeholder: i18n.t("cfg_manual_cmd")
+                            fieldValue: panel.eManualEntries[entryIdx]?.launch_command ?? ""
+                            entryIdx: entryDelegate.entryIdx; fieldKey: "launch_command"
+                        }
+
+                        // Cover image
+                        EntryField {
+                            placeholder: i18n.t("cfg_manual_cover")
+                            fieldValue: panel.eManualEntries[entryIdx]?.path_box_art ?? ""
+                            entryIdx: entryDelegate.entryIdx; fieldKey: "path_box_art"
+                        }
+                    }
+                }
+            }
+
+            // Add button
+            Item {
+                width: parent.width; height: 52
+                Rectangle {
+                    anchors.right: parent.right; anchors.rightMargin: 24
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 150; height: 34; radius: 8
+                    color: addHov.containsMouse ? Qt.rgba(1,1,1,0.12) : Qt.rgba(1,1,1,0.07)
+                    border.color: Qt.rgba(1,1,1,0.15); border.width: 1
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Row { anchors.centerIn: parent; spacing: 8
+                        Text { text: ""; font.family: "Font Awesome 7 Free Solid"; font.pixelSize: 11; color: panel.fg; anchors.verticalCenter: parent.verticalCenter }
+                        Text { text: i18n.t("cfg_manual_add"); font.pixelSize: 13; color: panel.fg; anchors.verticalCenter: parent.verticalCenter }
+                    }
+                    MouseArea { id: addHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: panel.manualAddEntry() }
                 }
             }
         }

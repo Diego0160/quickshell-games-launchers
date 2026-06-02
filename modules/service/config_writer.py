@@ -43,7 +43,18 @@ def main():
                 continue
             for key, val in values.items():
                 if key in doc[section]:
-                    doc[section][key] = val
+                    if isinstance(val, list) and key == "entries":
+                        aot = tomlkit.aot()
+                        for entry in val:
+                            t = tomlkit.table()
+                            for ek, ev in entry.items():
+                                t.add(ek, ev)
+                            aot.append(t)
+                        doc[section][key] = aot
+                    else:
+                        doc[section][key] = val
+                elif isinstance(val, list):
+                    doc[section].add(key, val)
 
         with open(path, "w") as f:
             tomlkit.dump(doc, f)

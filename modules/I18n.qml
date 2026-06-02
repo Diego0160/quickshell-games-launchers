@@ -56,6 +56,7 @@ Item {
             cfg_sec_lutris:      "Lutris",
             cfg_sec_sgdb:        "SteamGridDB",
             cfg_sec_filters:     "Filtres",
+            cfg_sec_manual:      "Entrées manuelles",
             // ── Config panel — groups ─────────────────────────────────────────
             cfg_grp_launcher:    "LAUNCHER",
             cfg_grp_sources:     "SOURCES",
@@ -168,6 +169,13 @@ Item {
             cfg_excl_cats_sub:      "Catégories à masquer  (séparées par virgule)",
             cfg_excl_keywords:      "Mots-clés exclus",
             cfg_excl_keywords_sub:  "Masque les jeux dont le nom contient ces mots  (séparés par virgule)",
+            cfg_manual_boxart_dir:      "Dossier box-art",
+            cfg_manual_boxart_dir_sub:  "Dossier contenant les images de couverture des entrées manuelles",
+            cfg_manual_add:             "Ajouter un jeu",
+            cfg_manual_title:           "Titre du jeu…",
+            cfg_manual_cmd:             "Commande de lancement…",
+            cfg_manual_cover:           "Image de couverture (optionnel)",
+            cfg_manual_empty:           "Aucune entrée — cliquez sur Ajouter",
         },
         "en": {
             // ── Launcher UI ───────────────────────────────────────────────────
@@ -200,6 +208,7 @@ Item {
             cfg_sec_lutris:      "Lutris",
             cfg_sec_sgdb:        "SteamGridDB",
             cfg_sec_filters:     "Filters",
+            cfg_sec_manual:      "Manual entries",
             // ── Config panel — groups ─────────────────────────────────────────
             cfg_grp_launcher:    "LAUNCHER",
             cfg_grp_sources:     "SOURCES",
@@ -312,6 +321,13 @@ Item {
             cfg_excl_cats_sub:      "Categories to hide  (comma-separated)",
             cfg_excl_keywords:      "Excluded keywords",
             cfg_excl_keywords_sub:  "Hide games whose name contains these words  (comma-separated)",
+            cfg_manual_boxart_dir:      "Box-art folder",
+            cfg_manual_boxart_dir_sub:  "Folder containing cover images for manual entries",
+            cfg_manual_add:             "Add a game",
+            cfg_manual_title:           "Game title…",
+            cfg_manual_cmd:             "Launch command…",
+            cfg_manual_cover:           "Cover image (optional)",
+            cfg_manual_empty:           "No entries — click Add",
         },
         "es": {
             // ── Launcher UI ───────────────────────────────────────────────────
@@ -344,6 +360,7 @@ Item {
             cfg_sec_lutris:      "Lutris",
             cfg_sec_sgdb:        "SteamGridDB",
             cfg_sec_filters:     "Filtros",
+            cfg_sec_manual:      "Entradas manuales",
             cfg_grp_launcher:    "LAUNCHER",
             cfg_grp_sources:     "FUENTES",
             cfg_grp_artwork:     "ARTWORK",
@@ -445,6 +462,10 @@ Item {
             cfg_excl_cats_sub:      "Categorías a ocultar  (separadas por coma)",
             cfg_excl_keywords:      "Palabras clave excluidas",
             cfg_excl_keywords_sub:  "Ocultar juegos cuyo nombre contiene estas palabras  (separadas por coma)",
+            cfg_manual_boxart_dir: "Carpeta box-art", cfg_manual_boxart_dir_sub: "Carpeta con imágenes de portada",
+            cfg_manual_add: "Añadir juego", cfg_manual_title: "Título del juego…",
+            cfg_manual_cmd: "Comando de lanzamiento…", cfg_manual_cover: "Portada (opcional)",
+            cfg_manual_empty: "Sin entradas — haz clic en Añadir",
         },
         "ru": {
             // ── Launcher UI ───────────────────────────────────────────────────
@@ -477,6 +498,7 @@ Item {
             cfg_sec_lutris:      "Lutris",
             cfg_sec_sgdb:        "SteamGridDB",
             cfg_sec_filters:     "Фильтры",
+            cfg_sec_manual:      "Ручные записи",
             cfg_grp_launcher:    "LAUNCHER",
             cfg_grp_sources:     "ИСТОЧНИКИ",
             cfg_grp_artwork:     "ARTWORK",
@@ -578,6 +600,10 @@ Item {
             cfg_excl_cats_sub:      "Категории для скрытия  (через запятую)",
             cfg_excl_keywords:      "Исключённые слова",
             cfg_excl_keywords_sub:  "Скрыть игры, в названии которых есть эти слова  (через запятую)",
+            cfg_manual_boxart_dir: "Папка box-art", cfg_manual_boxart_dir_sub: "Папка с обложками для ручных записей",
+            cfg_manual_add: "Добавить игру", cfg_manual_title: "Название игры…",
+            cfg_manual_cmd: "Команда запуска…", cfg_manual_cover: "Обложка (опционально)",
+            cfg_manual_empty: "Нет записей — нажмите Добавить",
         },
         "ja": {
             // ── Launcher UI ───────────────────────────────────────────────────
@@ -610,6 +636,7 @@ Item {
             cfg_sec_lutris:      "Lutris",
             cfg_sec_sgdb:        "SteamGridDB",
             cfg_sec_filters:     "フィルター",
+            cfg_sec_manual:      "手動エントリ",
             cfg_grp_launcher:    "LAUNCHER",
             cfg_grp_sources:     "ソース",
             cfg_grp_artwork:     "ARTWORK",
@@ -711,6 +738,10 @@ Item {
             cfg_excl_cats_sub:      "非表示にするカテゴリ  (カンマ区切り)",
             cfg_excl_keywords:      "除外キーワード",
             cfg_excl_keywords_sub:  "これらの単語を含むゲームを非表示  (カンマ区切り)",
+            cfg_manual_boxart_dir: "Box-artフォルダ", cfg_manual_boxart_dir_sub: "手動エントリのカバー画像フォルダ",
+            cfg_manual_add: "ゲームを追加", cfg_manual_title: "ゲームタイトル…",
+            cfg_manual_cmd: "起動コマンド…", cfg_manual_cover: "カバー画像（任意）",
+            cfg_manual_empty: "エントリなし — 追加をクリック",
         },
     })
 }
