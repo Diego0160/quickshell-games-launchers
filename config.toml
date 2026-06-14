@@ -89,7 +89,10 @@ duration_ms = 300
 
 
 # Steam library folders — add as many as you have
-library_paths = ["~/.local/share/Steam/steamapps", "~/.var/app/com.valvesoftware.Steam/data/Steam/steamapps"]
+library_paths = [
+    "~/.local/share/Steam/steamapps",
+    "~/.var/app/com.valvesoftware.Steam/data/Steam/steamapps",
+]
 
 
 # ── HEROIC ───────────────────────────────────────────────────────────────────
@@ -188,6 +191,10 @@ cache_ttl_hours = 48
 #   Drop box-art images in the folder below, then reference them by filename.
 # ─────────────────────────────────────────────────────────────────────────────
 
+
+# Enable SteamGridDB cover art fetching
+enabled = true
+
 [manual]
 
 box_art_dir = "~/.config/quickshell/game-launcher/box-art"
@@ -195,6 +202,6 @@ box_art_dir = "~/.config/quickshell/game-launcher/box-art"
 # ── Add entries below — copy the block to add more ───────────────────────
 
 [[manual.entries]]
-title = "Game Library"
+title          = "Game Library"
 launch_command = "~/.config/quickshell/game-launcher/modules/service/run_in_terminal.sh python3 ~/.config/quickshell/game-launcher/modules/service/list_games.py"
-path_box_art = "library.png"
+path_box_art   = "library.png"
