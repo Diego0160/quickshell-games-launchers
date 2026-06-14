@@ -112,6 +112,12 @@ class GameLauncher:
             ),
             (
                 "steamgriddb",
+                "enabled",
+                "true",
+                "# Enable SteamGridDB cover art fetching",
+            ),
+            (
+                "steamgriddb",
                 "fallback_to_steam",
                 "true",
                 "# Fall back to Steam CDN images when no SGDB cover is found",
