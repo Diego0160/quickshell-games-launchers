@@ -506,12 +506,13 @@ class SGDBClient:
             ]
             is_shortcut = category == "steam-shortcut"
             is_sideload = category == "sideload" or source in ["heroic", "sideload"]
-            needs_fetch = (
+            needs_static = (
                 not image or "steamstatic.com" in image or is_shortcut or is_sideload
             )
+            needs_animated = prefer_animated and not game.get("image_animated")
             has_id = game.get("appid") or source in ["lutris", "manual", "config"]
-            if valid_source and has_id and needs_fetch:
-                games_to_fetch.append((i, game))
+            if valid_source and has_id and (needs_static or needs_animated):
+                games_to_fetch.append((i, game, needs_static))
 
         if not games_to_fetch:
             return games
@@ -520,23 +521,25 @@ class SGDBClient:
             return games
 
         def fetch_all(item):
-            idx, game = item
+            idx, game, do_static = item
             platform = self.get_steamgriddb_platform(
                 game.get("source", ""), game.get("category", "")
             )
             appid = game.get("appid")
             name = game.get("name", "")
 
-            # Toujours récupérer la version statique
-            static_url = self.get_steamgriddb_cover_url(
-                appid, platform, game_name=name, prefer_animated=False
-            )
-            if (
-                not static_url
-                and game.get("source") == "steam"
-                and game.get("category") != "steam-shortcut"
-            ):
-                static_url = self.get_steam_cdn_fallback_url(appid)
+            # Récupérer la version statique seulement si nécessaire
+            static_url = None
+            if do_static:
+                static_url = self.get_steamgriddb_cover_url(
+                    appid, platform, game_name=name, prefer_animated=False
+                )
+                if (
+                    not static_url
+                    and game.get("source") == "steam"
+                    and game.get("category") != "steam-shortcut"
+                ):
+                    static_url = self.get_steam_cdn_fallback_url(appid)
 
             # Version animée séparée si activée
             animated_url = None
