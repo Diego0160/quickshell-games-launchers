@@ -70,9 +70,18 @@ ShellRoot {
             id: launcherWindow
             property var modelData
 
+            // Only show on the monitor Hyprland currently has focused (the
+            // "active" screen). Fall back to showing everywhere if Hyprland
+            // hasn't reported a focused monitor yet.
+            property bool onActiveScreen: {
+                const fm = Hyprland.focusedMonitor
+                if (!fm || !modelData) return true
+                return fm.name === modelData.name
+            }
+
             screen: modelData
             exclusionMode: ExclusionMode.Ignore
-            visible: root.launcherVisible
+            visible: root.launcherVisible && onActiveScreen
             color: "transparent"
 
             implicitWidth: screen.width
