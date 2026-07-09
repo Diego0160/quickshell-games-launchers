@@ -149,6 +149,23 @@ bind = SUPER, G, exec, quickshell-game
 bind = SUPER, G, exec, ~/.config/quickshell/game-launcher/toggle.sh
 ```
 
+### Instant open (daemon mode)
+
+The launcher runs as a **persistent daemon**: it starts hidden and stays warm
+(config, game list and cover art preloaded), and `SUPER + G` just toggles its
+visibility over IPC — no cold start and no cover re-decoding on each open.
+
+`toggle.sh` starts the daemon automatically on the first press. To make even the
+**first** press of the session instant, pre-warm it at login by adding to your
+Hyprland autostart (`exec-once`):
+
+```conf
+exec-once = quickshell -c game-launcher &
+```
+
+> **Note:** the game list is scanned once when the daemon starts. After
+> installing a new game, press **F5** in the launcher to refresh it.
+
 ---
 
 ## ⚙️ Configuration
