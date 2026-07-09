@@ -147,6 +147,9 @@ Rectangle {
                 visible: card.isAnimatedWebP && (!card.isSelected || animCover.status !== Image.Ready)
                 source: visible ? card.effectiveImage : ""
                 fillMode: Image.PreserveAspectCrop
+                // Decode at card size instead of full hero resolution (big speedup)
+                sourceSize.width: Math.round(card.width)
+                sourceSize.height: Math.round(card.height)
                 asynchronous: true
                 cache: true
             }
@@ -176,6 +179,9 @@ Rectangle {
                 visible: !card.isAnimated
                 source: visible ? card.effectiveImage : ""
                 fillMode: Image.PreserveAspectCrop
+                // Decode at card size instead of full hero resolution (big speedup)
+                sourceSize.width: Math.round(card.width)
+                sourceSize.height: Math.round(card.height)
                 asynchronous: true
                 smooth: true
                 cache: true
