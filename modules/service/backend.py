@@ -136,6 +136,12 @@ class GameLauncher:
                 "true",
                 "# Animated gradient border around the launcher window and search bar",
             ),
+            (
+                "animations",
+                "cache_in_memory",
+                "false",
+                "# Keep decoded animated WebP frames in RAM (opt-in, upstream: RAM-light by default)",
+            ),
         ]
         try:
             with open(self.config_path, "r", encoding="utf-8") as f:
