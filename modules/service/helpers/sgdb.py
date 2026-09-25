@@ -131,6 +131,7 @@ class SGDBClient:
         platform: str = "steam",
         game_name: str = "",
         prefer_animated: Optional[bool] = None,
+        is_sideload: bool = False,
     ) -> Optional[str]:
         sgdb_config = self.config.get("steamgriddb", {})
         if not sgdb_config.get("enabled", False):
@@ -146,6 +147,10 @@ class SGDBClient:
         cache_key = (
             f"{platform}:{app_id}:{sgdb_config.get('image_type', 'grid')}:{anim_suffix}"
         )
+        if is_sideload:
+            # Key on the title as well: an entry written by an older build from
+            # the bogus direct-ID lookup would otherwise still be served (#13).
+            cache_key = f"{cache_key}:{game_name}"
         cached_url = self.image_cache.get(cache_key)
         if cached_url is not None:
             return self._local_or_url(cached_url) if cached_url else None
@@ -241,22 +246,29 @@ class SGDBClient:
                 pool = sorted(imgs, key=score_image, reverse=True)
             return pool[0].get("url", pool[0].get("thumb"))
 
-        if prefer_animated:
-            raw = do_request(make_url("animated", with_dims=True))
+        # Sideload appids are Heroic-internal ids, not real platform ids, and
+        # get_steamgriddb_platform() maps them to "steam". A direct
+        # /grids/steam/<appid> lookup can therefore resolve to an unrelated
+        # game, and because that hit returns early the title search below never
+        # runs — so every sideload entry ends up sharing the same wrong cover
+        # (upstream issue #13). Never accept a direct-ID hit for sideload.
+        if not is_sideload:
+            if prefer_animated:
+                raw = do_request(make_url("animated", with_dims=True))
+                if raw is None and dimensions:
+                    raw = do_request(make_url("animated", with_dims=False))
+                image_url = best_image(raw, prefer_webm=False)
+                if image_url:
+                    self.image_cache.set(cache_key, image_url)
+                    return self._local_or_url(image_url)
+
+            raw = do_request(make_url("static", with_dims=True, mimes_val="image/jpeg,image/png"))
             if raw is None and dimensions:
-                raw = do_request(make_url("animated", with_dims=False))
+                raw = do_request(make_url("static", with_dims=False, mimes_val="image/jpeg,image/png"))
             image_url = best_image(raw, prefer_webm=False)
             if image_url:
                 self.image_cache.set(cache_key, image_url)
                 return self._local_or_url(image_url)
-
-        raw = do_request(make_url("static", with_dims=True, mimes_val="image/jpeg,image/png"))
-        if raw is None and dimensions:
-            raw = do_request(make_url("static", with_dims=False, mimes_val="image/jpeg,image/png"))
-        image_url = best_image(raw, prefer_webm=False)
-        if image_url:
-            self.image_cache.set(cache_key, image_url)
-            return self._local_or_url(image_url)
 
         if game_name:
             sgdb_id = self._search_sgdb_id_by_name(game_name, api_key, timeout)
@@ -382,7 +394,10 @@ class SGDBClient:
     ) -> str:
         platform = self.get_steamgriddb_platform(source, source)
         sgdb_url = self.get_steamgriddb_cover_url(
-            app_id, platform=platform, game_name=game_name
+            app_id,
+            platform=platform,
+            game_name=game_name,
+            is_sideload=source.lower() == "sideload",
         )
         return sgdb_url if sgdb_url else art_url
 
@@ -539,12 +554,20 @@ class SGDBClient:
             if not appid or str(appid) in ("None", ""):
                 return idx, None, None, None, []
             name = game.get("name", "")
+            is_sideload = (
+                game.get("category") == "sideload"
+                or game.get("source") in ("heroic", "sideload")
+            )
 
             # Récupérer la version statique seulement si nécessaire
             static_url = None
             if do_static:
                 static_url = self.get_steamgriddb_cover_url(
-                    appid, platform, game_name=name, prefer_animated=False
+                    appid,
+                    platform,
+                    game_name=name,
+                    prefer_animated=False,
+                    is_sideload=is_sideload,
                 )
                 if (
                     not static_url
