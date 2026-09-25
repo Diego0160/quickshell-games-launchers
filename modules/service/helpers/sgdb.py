@@ -297,7 +297,7 @@ class SGDBClient:
                     self.image_cache.set(cache_key, image_url)
                     return self._local_or_url(image_url)
 
-        self.image_cache.set(cache_key, "")
+        # No negative cache: leave unset so next launch retries (empty SGDB results may appear later)
         return None
 
     # ── Logo ───────────────────────────────────────────────────────────────
@@ -335,7 +335,8 @@ class SGDBClient:
                         return self._local_or_url(logo_url)
         except urllib.error.HTTPError as e:
             if e.code == 404:
-                self.image_cache.set(cache_key, "")
+                # No negative cache: leave unset so next launch retries (empty SGDB results may appear later)
+                pass
         except (urllib.error.URLError, json.JSONDecodeError) as e:
             print(f"[sgdb] name fallback failed: {e}", file=sys.stderr)
 
@@ -359,7 +360,7 @@ class SGDBClient:
                 except (urllib.error.URLError, json.JSONDecodeError) as e:
                     print(f"[sgdb] logo name fallback failed: {e}", file=sys.stderr)
 
-        self.image_cache.set(cache_key, "")
+        # No negative cache: leave unset so next launch retries (empty SGDB results may appear later)
         return None
 
     # ── Helpers cover haut niveau ──────────────────────────────────────────
@@ -469,7 +470,9 @@ class SGDBClient:
                 raw = do_request(name_base + query)
                 urls = top_images(raw, n)
 
-        self.image_cache.set(cache_key, json.dumps(urls))
+        # No negative cache: leave unset so next launch retries (empty SGDB results may appear later)
+        if urls:
+            self.image_cache.set(cache_key, json.dumps(urls))
         return [self._local_or_url(u) for u in urls]
 
     # ── Fetch parallèle ────────────────────────────────────────────────────

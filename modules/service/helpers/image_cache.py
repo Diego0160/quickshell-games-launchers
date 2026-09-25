@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 import json
 import sys
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+ORPHAN_GRACE_SECONDS = 7 * 86400  # 7 days
 
 
 class ImageCache:
@@ -76,8 +79,19 @@ class ImageCache:
                     )
             elif url and url.startswith("http"):
                 valid.add(self.cached_image_path(url))
+        grace_cutoff = time.time() - ORPHAN_GRACE_SECONDS
         for f in self.cache_dir.iterdir():
             if f.is_file() and str(f) not in valid:
+                # Grace period: keep recent orphans (cache may regenerate
+                # with fewer entries on rescan)
+                try:
+                    if f.stat().st_mtime > grace_cutoff:
+                        continue
+                except OSError as e:
+                    print(
+                        f"[image_cache] could not stat {f.name}: {e}", file=sys.stderr
+                    )
+                    continue
                 try:
                     f.unlink()
                 except OSError as e:
